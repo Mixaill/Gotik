@@ -330,9 +330,9 @@ func (k *Kotik) command_volume(text string) {
 
 func main() {
 	//Flags
-	flag_username := flag.String("username", "Kotik", "username of the bot")
+	flag_username := flag.String("username", "Kotik-dev", "username of the bot")
 	flag_password := flag.String("password", "", "user password")
-	flag_dev := flag.Bool("dev",false,"development mode")
+	flag_dev := flag.Bool("dev",true,"development mode")
 	flag_server := flag.String("server", "direct.galyonkin.com:64738", "address of the server")
 	flag_certificateFile := flag.String("certificate", "", "user certificate file (PEM)")
 	flag_keyFile := flag.String("key", "", "user certificate key file (PEM)")
