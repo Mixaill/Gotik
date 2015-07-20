@@ -20,7 +20,7 @@ Kotik bot written in go
     - `export CGO_LDFLAGS="$(pkg-config --libs opus)"`
     - `export CGO_CFLAGS="$(pkg-config --cflags opus)"`
 4. Fetch 
-    -`git clone https://github.com/Mixaill/Gotik/`
+    - `git clone https://github.com/Mixaill/Gotik/ .`
     - `go get -tags nopkgconfig .`
 5. Build piepan
     - `go build -o Kotik.exe .`
