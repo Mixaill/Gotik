@@ -13,8 +13,8 @@ Kotik bot written in go
         2. Download and run [MSYS2 installer](http://sourceforge.net/projects/msys2/)
             - Uncheck "Run MSYS2 32/64bit now"
     2. Open the MSYS2 "MinGW-w64 Win32/64 Shell" from the start menu to install additional dependencies
-            - `pacman -Syu`
-            - `pacman -Syy mingw-w64-i686-toolchain git mingw-w64-i686-opus pkg-config mingw-w64-i686-ffmpeg`
+        - `pacman -Syu`
+        - `pacman -Syy mingw-w64-i686-toolchain git mingw-w64-i686-opus pkg-config mingw-w64-i686-ffmpeg`
 2. Move to target directory
 3. Fetch repo
     - `git clone https://github.com/Mixaill/Gotik/ .`
