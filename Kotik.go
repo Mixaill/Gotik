@@ -148,7 +148,7 @@ func (k *Kotik) command_help(e *gumble.User) {
 		"!stop             : остановить воспроизведение звука<br/>" +
 		"!pause            : приостановить воспроизведение<br/>" +
 		"!resume           : восстановить воспроизведение<br/>" +
-		"!volume [float]   : установить громкость. Максимальная 2.0, cтандартная 1.0, минимальная 0.0, шаг 0.1<br/>" +
+		"!volume [float]   : установить громкость. Максимальная 100, cтандартная 50, минимальная 0, шаг 1<br/>" +
 		"!update           : делает апдейт<br/>" +
 		"!status           : информация про бота<br/>"
 	e.Send(str)
@@ -293,7 +293,9 @@ func (k *Kotik) command_status(e *gumble.User) {
 	var str string = ""
 	str = "<br/>" +
 		"Uptime       : " + strconv.FormatFloat(time.Since(k.connectTime).Hours(), 'f', 2, 64) + "hours <br/>" +
-		"Memory alloc : " + strconv.FormatFloat(float64(mem.Alloc)/1024.0/1024.0, 'f', 2, 64) + "MB <br/>"
+		"Memory alloc : " + strconv.FormatFloat(float64(mem.Alloc)/1024.0/1024.0, 'f', 2, 64) + "MB <br/>"+
+		"Volume       : " + strconv.FormatInt(int64(k.Audio.Volume*50.00),10) + "% <br/>"
+		
 	e.Send(str)
 }
 
@@ -315,15 +317,15 @@ func (k *Kotik) command_update(e *gumble.User) {
 }
 
 func (k *Kotik) command_volume(text string) {
-	re_sound := regexp.MustCompile("^!volume[ ]?(\\d+[.]?[\\d]?)")
+	re_sound := regexp.MustCompile("^!volume[ ]?(\\d+?")
 	result_sound := re_sound.FindStringSubmatch(text)
 	if len(result_sound) == 2 {
-		i, err := strconv.ParseFloat(result_sound[1], 32)
+		i, err := strconv.Atoi(result_sound[1])
 		if err == nil {
-			if i > 2.0 {
-				i = 2.0
+			if i > 100 {
+				i = 100
 			}
-			k.Audio.Volume = float32(i)
+			k.Audio.Volume = float32(i)/50.00
 		}
 	}
 }
