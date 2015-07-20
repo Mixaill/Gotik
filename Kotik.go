@@ -317,7 +317,7 @@ func (k *Kotik) command_update(e *gumble.User) {
 }
 
 func (k *Kotik) command_volume(text string) {
-	re_sound := regexp.MustCompile("^!volume[ ]?(\\d+?")
+	re_sound := regexp.MustCompile("^!volume[ ]?(\\d+)")
 	result_sound := re_sound.FindStringSubmatch(text)
 	if len(result_sound) == 2 {
 		i, err := strconv.Atoi(result_sound[1])
