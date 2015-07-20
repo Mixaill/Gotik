@@ -365,9 +365,9 @@ func main() {
 	}
 	
 	if _, err := os.Stat("./Kotik.pem"); err == nil && *flag_dev==false{ 
-		*flag_certificateFile = "Kotik.pem"
+		*flag_certificateFile = "./Kotik.pem"
 	}else if _, err := os.Stat("./Kotik-dev.pem"); err == nil && *flag_dev==true{
-		*flag_certificateFile = "Kotik-dev.pem"
+		*flag_certificateFile = "./Kotik-dev.pem"
 	}
 	
 	if *flag_certificateFile != "" {
