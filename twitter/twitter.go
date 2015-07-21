@@ -3,6 +3,7 @@ package twitter
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -101,6 +102,12 @@ func (tw *Twitter) TurnRelease() []string {
 	for _, twit := range tw.twitTurn {
 		t, _ := twit.CreatedAtTime()
 		str := "котик " + twit.User.ScreenName + " " + strconv.FormatInt(int64(time.Since(t).Minutes()), 10) + " минуты назад. " + strings.Replace(twit.Text, "\n", "\\n", -1)
+
+		re := regexp.MustCompile("http[s]?:\\/\\/t\\.co\\/.*?([ ]|$)")
+		str = re.ReplaceAllString(str, "")
+		str = strings.Replace(str, "/", "", -1)
+
+		fmt.Println("TurnRelease()-> " + str)
 		twits = append(twits, str)
 	}
 	tw.twitTurn = tw.twitTurn[:0]
