@@ -51,8 +51,10 @@ func (k *Kotik) OnDisconnect(e *gumble.DisconnectEvent) {
 }
 
 func (k *Kotik) OnTextMessage(e *gumble.TextMessageEvent) {
-	fmt.Println(k.Timestamp() + "OnTextMessage()-> User: " + e.Sender.Name + "| Message:" + e.Message)
-
+	fmt.Println(k.Timestamp() + "OnTextMessage()-> Message:" + e.Message)
+	if e.Sender != nil {
+		fmt.Println(k.Timestamp() + "               -> User: " + e.Sender.Name)
+	}
 	re_cmd := regexp.MustCompile("^!\\w+")
 	switch re_cmd.FindString(e.Message) {
 	case "!help":
@@ -292,9 +294,9 @@ func (k *Kotik) command_status(e *gumble.User) {
 	var str string = ""
 	str = "<br/>" +
 		"Uptime       : " + strconv.FormatFloat(time.Since(k.connectTime).Hours(), 'f', 2, 64) + "hours <br/>" +
-		"Memory alloc : " + strconv.FormatFloat(float64(mem.Alloc)/1024.0/1024.0, 'f', 2, 64) + "MB <br/>"+
-		"Volume       : " + strconv.FormatInt(int64(k.Audio.Volume*50.00),10) + "% <br/>"
-		
+		"Memory alloc : " + strconv.FormatFloat(float64(mem.Alloc)/1024.0/1024.0, 'f', 2, 64) + "MB <br/>" +
+		"Volume       : " + strconv.FormatInt(int64(k.Audio.Volume*50.00), 10) + "% <br/>"
+
 	e.Send(str)
 }
 
@@ -324,7 +326,7 @@ func (k *Kotik) command_volume(text string) {
 			if i > 100 {
 				i = 100
 			}
-			k.Audio.Volume = float32(i)/50.00
+			k.Audio.Volume = float32(i) / 50.00
 		}
 	}
 }
@@ -333,7 +335,7 @@ func main() {
 	//Flags
 	flag_username := flag.String("username", "Kotik-dev", "username of the bot")
 	flag_password := flag.String("password", "", "user password")
-	flag_dev := flag.Bool("dev",true,"development mode")
+	flag_dev := flag.Bool("dev", true, "development mode")
 	flag_server := flag.String("server", "direct.galyonkin.com:64738", "address of the server")
 	flag_certificateFile := flag.String("certificate", "", "user certificate file (PEM)")
 	flag_keyFile := flag.String("key", "", "user certificate key file (PEM)")
@@ -364,13 +366,13 @@ func main() {
 	if *flag_lock != "" {
 		gumbleutil.CertificateLockFile(k.Client, *flag_lock)
 	}
-	
-	if _, err := os.Stat("./Kotik.pem"); err == nil && *flag_dev==false{ 
+
+	if _, err := os.Stat("./Kotik.pem"); err == nil && *flag_dev == false {
 		*flag_certificateFile = "./Kotik.pem"
-	}else if _, err := os.Stat("./Kotik-dev.pem"); err == nil && *flag_dev==true{
+	} else if _, err := os.Stat("./Kotik-dev.pem"); err == nil && *flag_dev == true {
 		*flag_certificateFile = "./Kotik-dev.pem"
 	}
-	
+
 	if *flag_certificateFile != "" {
 		if *flag_keyFile == "" {
 			flag_keyFile = flag_certificateFile

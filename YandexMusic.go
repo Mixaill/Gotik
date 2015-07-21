@@ -183,7 +183,7 @@ func (ym *YMusic) getTrack(text string) (io.ReadCloser, string) {
 	dinfo := ym.getFileDInfo(search, filename)
 
 	if dinfo.Host != "" && dinfo.Path != "" {
-		title= search.Tracks.Items[0].Artists[0].Name + " - " + search.Tracks.Items[0].Title
+		title = search.Tracks.Items[0].Artists[0].Name + " - " + search.Tracks.Items[0].Title
 		skey := md5.New()
 		io.WriteString(skey, "XGRlBW9FXlekgbPrRHuSiA"+dinfo.Path[1:]+dinfo.S)
 		request := "http://" + dinfo.Host + "/get-mp3/" + hex.EncodeToString(skey.Sum(nil)) + "/"
@@ -195,7 +195,7 @@ func (ym *YMusic) getTrack(text string) (io.ReadCloser, string) {
 			fmt.Println(err)
 		}
 
-		return res.Body , title
+		return res.Body, title
 	}
 	return nil, title
 }
