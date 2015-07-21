@@ -1,4 +1,4 @@
-package main
+package twitter
 
 import (
 	"fmt"
@@ -17,11 +17,10 @@ type Twitter struct {
 	lastUpdate time.Time
 }
 
-func (tw *Twitter) Init() {
+func New() *Twitter {
 	anaconda.SetConsumerKey("ememheL6J1S5r1RwBzoaKc4KR")
 	anaconda.SetConsumerSecret("HKyDHzrirIqVSNJu414ajTLcGXoWIpnkrpNERAY1AEgKP3an6C")
-	tw.api = anaconda.NewTwitterApi("50292089-521odSFl4uKfV0oLcIryalgetYuP0nxo7i6bQCjTE", "djU5cDWW9rsR2kWmYExR9CxLpJdZdaNTWe7YOubV9VB5b")
-	//tw.lastUpdate = time.Now()
+	return &Twitter{api: anaconda.NewTwitterApi("50292089-521odSFl4uKfV0oLcIryalgetYuP0nxo7i6bQCjTE", "djU5cDWW9rsR2kWmYExR9CxLpJdZdaNTWe7YOubV9VB5b"), lastUpdate: time.Now()}
 }
 
 func (tw *Twitter) UsersAdd(name string) {
@@ -93,11 +92,15 @@ func (tw *Twitter) TurnFill() {
 	tw.lastUpdate = time.Now()
 }
 
+func (tw *Twitter) TurnSize() int {
+	return len(tw.twitTurn)
+}
+
 func (tw *Twitter) TurnRelease() []string {
 	var twits []string
 	for _, twit := range tw.twitTurn {
 		t, _ := twit.CreatedAtTime()
-		str := "@ " + twit.User.ScreenName + " " + strconv.FormatInt(int64(time.Since(t).Minutes()), 10) + " минуты назад. " + strings.Replace(twit.Text, "\n", "\\n", -1)
+		str := "котик " + twit.User.ScreenName + " " + strconv.FormatInt(int64(time.Since(t).Minutes()), 10) + " минуты назад. " + strings.Replace(twit.Text, "\n", "\\n", -1)
 		twits = append(twits, str)
 	}
 	tw.twitTurn = tw.twitTurn[:0]

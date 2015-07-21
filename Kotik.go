@@ -21,17 +21,23 @@ import (
 	_ "github.com/layeh/gumble/opus"
 
 	"github.com/jpadilla/ivona-go"
+
+	"./twitter"
 )
 
 //Kotik struct
 type Kotik struct {
-	Audio  *gumble_ffmpeg.Stream
-	Config *gumble.Config
-	Client *gumble.Client
-	Ivona  *ivona.Ivona
+	Audio     *gumble_ffmpeg.Stream
+	Config    *gumble.Config
+	Client    *gumble.Client
+	Ivona     *ivona.Ivona
+	Twitter_i *twitter.Twitter
 
-	keepAlive   chan bool
-	connectTime time.Time
+	ch_keepAlive       chan int
+	ch_TwitterPlaying  chan int
+	ch_TwitterFetching chan int
+	ch_CallBack        chan int
+	connectTime        time.Time
 }
 
 //Helpers
@@ -43,10 +49,27 @@ func (k *Kotik) Timestamp() string {
 func (k *Kotik) OnConnect(e *gumble.ConnectEvent) {
 	k.connectTime = time.Now()
 	fmt.Println(k.Timestamp() + "OnConnect()")
+
+	go k.command_twitter_bootstrap()
+
+	//twitter fetching
+	ticker := time.NewTicker(time.Second * 30)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				k.command_twitter_process(nil)
+			case <-k.ch_TwitterFetching:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 }
 
 func (k *Kotik) OnDisconnect(e *gumble.DisconnectEvent) {
 	fmt.Println(k.Timestamp() + "OnDisconnect()")
+	k.ch_keepAlive <- 1
 	os.Exit(0)
 }
 
@@ -54,7 +77,14 @@ func (k *Kotik) OnTextMessage(e *gumble.TextMessageEvent) {
 	fmt.Println(k.Timestamp() + "OnTextMessage()-> Message:" + e.Message)
 	if e.Sender != nil {
 		fmt.Println(k.Timestamp() + "               -> User: " + e.Sender.Name)
+	} else {
+		return
 	}
+
+	if e.Sender.IsRegistered() == false {
+		return
+	}
+
 	re_cmd := regexp.MustCompile("^!\\w+")
 	switch re_cmd.FindString(e.Message) {
 	case "!help":
@@ -79,6 +109,8 @@ func (k *Kotik) OnTextMessage(e *gumble.TextMessageEvent) {
 		k.command_resume()
 	case "!status":
 		k.command_status(e.Sender)
+	case "!twitter":
+		go k.command_twitter_process(e.Sender)
 	}
 
 	re_snd := regexp.MustCompile("#(\\w+)")
@@ -95,7 +127,7 @@ func (k *Kotik) OnTextMessage(e *gumble.TextMessageEvent) {
 	re_ivona := regexp.MustCompile("\\$\\$\\$(.*)")
 	result_ivona := re_ivona.FindStringSubmatch(e.Message)
 	if len(result_ivona) == 2 {
-		k.command_play_ivona(result_ivona[1])
+		go k.command_play_ivona(result_ivona[1], k.ch_CallBack)
 	}
 
 }
@@ -232,7 +264,7 @@ func (k *Kotik) command_pause() {
 	k.Audio.Pause()
 }
 
-func (k *Kotik) command_play_ivona(text string) {
+func (k *Kotik) command_play_ivona(text string, ch chan int) {
 	if k.Audio.IsPlaying() {
 		return
 	}
@@ -250,6 +282,8 @@ func (k *Kotik) command_play_ivona(text string) {
 		rc = cb
 		k.Audio.Source = gumble_ffmpeg.SourceReader(rc)
 		k.Audio.Play()
+		k.Audio.Wait()
+		ch <- 1
 	}
 }
 
@@ -293,14 +327,16 @@ func (k *Kotik) command_status(e *gumble.User) {
 	runtime.ReadMemStats(&mem)
 	var str string = ""
 	str = "<br/>" +
-		"Uptime       : " + strconv.FormatFloat(time.Since(k.connectTime).Hours(), 'f', 2, 64) + "hours <br/>" +
-		"Memory alloc : " + strconv.FormatFloat(float64(mem.Alloc)/1024.0/1024.0, 'f', 2, 64) + "MB <br/>" +
-		"Volume       : " + strconv.FormatInt(int64(k.Audio.Volume*50.00), 10) + "% <br/>"
+		"Uptime                : " + strconv.FormatFloat(time.Since(k.connectTime).Hours(), 'f', 2, 64) + " hours <br/>" +
+		"Memory alloc          : " + strconv.FormatFloat(float64(mem.Alloc)/1024.0/1024.0, 'f', 2, 64) + " MB <br/>" +
+		"Volume                : " + strconv.FormatInt(int64(k.Audio.Volume*50.00), 10) + "% <br/>" +
+		"Twitter subscriptions : " + k.Twitter_i.UsersGet() + "<br/>"
 
 	e.Send(str)
 }
 
 func (k *Kotik) command_stop() {
+	close(k.ch_TwitterPlaying)
 	k.Audio.Stop()
 }
 
@@ -331,6 +367,33 @@ func (k *Kotik) command_volume(text string) {
 	}
 }
 
+func (k *Kotik) command_twitter_process(sender *gumble.User) {
+	k.Twitter_i.TurnFill()
+	if sender != nil {
+		sender.Send("Сейчас будет зачитано " + strconv.FormatInt(int64(k.Twitter_i.TurnSize()), 10) + " твитов")
+	}
+	twits := k.Twitter_i.TurnRelease()
+
+	for _, twit := range twits {
+		go k.command_play_ivona(twit, k.ch_CallBack)
+		select {
+		case _ = <-k.ch_TwitterPlaying:
+			return
+		case _ = <-k.ch_CallBack:
+			continue
+		}
+	}
+}
+
+func (k *Kotik) command_twitter_bootstrap() {
+	k.Twitter_i.UsersAdd("galyonkin")
+	k.Twitter_i.UsersAdd("kuzmitch_ru")
+	k.Twitter_i.UsersAdd("artleshiy")
+	k.Twitter_i.UsersAdd("meownauts")
+	k.Twitter_i.UsersAdd("hikimori911")
+	k.Twitter_i.UsersAdd("deomon")
+}
+
 func main() {
 	//Flags
 	flag_username := flag.String("username", "Kotik-dev", "username of the bot")
@@ -342,8 +405,15 @@ func main() {
 	flag_lock := flag.String("lock", "", "server certificate lock file")
 	flag.Parse()
 
-	//Config
 	k := Kotik{}
+
+	//Channels
+	k.ch_keepAlive = make(chan int)
+	k.ch_TwitterFetching = make(chan int)
+	k.ch_TwitterPlaying = make(chan int)
+	k.ch_CallBack = make(chan int)
+
+	//Config
 	k.Config = gumble.NewConfig()
 	k.Config.Username = *flag_username
 	k.Config.Password = *flag_password
@@ -357,6 +427,9 @@ func main() {
 
 	//Ivona creation
 	k.Ivona = ivona.New("GDNAIKHZ6EJPBXXTKZFA", "akU4WnCw2XozeJeMsnS7pVqlBsLgqF4FQbVRnu05")
+
+	//Twitter creation and bootstap
+	k.Twitter_i = twitter.New()
 
 	//Attach listeners
 	k.Client.Attach(gumbleutil.AutoBitrate)
@@ -389,5 +462,5 @@ func main() {
 		panic(err)
 	}
 
-	<-k.keepAlive
+	<-k.ch_keepAlive
 }
