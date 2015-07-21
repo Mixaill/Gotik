@@ -337,7 +337,7 @@ func (k *Kotik) command_status(e *gumble.User) {
 }
 
 func (k *Kotik) command_stop() {
-	close(k.ch_TwitterPlaying)
+	k.ch_TwitterPlaying <- 1
 	k.Audio.Stop()
 }
 
