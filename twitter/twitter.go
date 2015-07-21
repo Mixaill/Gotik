@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,12 +15,21 @@ type Twitter struct {
 	users      []anaconda.User
 	twitTurn   []anaconda.Tweet
 	lastUpdate time.Time
+	updateRate time.Duration
 }
 
 func New() *Twitter {
 	anaconda.SetConsumerKey("ememheL6J1S5r1RwBzoaKc4KR")
 	anaconda.SetConsumerSecret("HKyDHzrirIqVSNJu414ajTLcGXoWIpnkrpNERAY1AEgKP3an6C")
-	return &Twitter{api: anaconda.NewTwitterApi("50292089-521odSFl4uKfV0oLcIryalgetYuP0nxo7i6bQCjTE", "djU5cDWW9rsR2kWmYExR9CxLpJdZdaNTWe7YOubV9VB5b"), lastUpdate: time.Now()}
+	return &Twitter{api: anaconda.NewTwitterApi("50292089-521odSFl4uKfV0oLcIryalgetYuP0nxo7i6bQCjTE", "djU5cDWW9rsR2kWmYExR9CxLpJdZdaNTWe7YOubV9VB5b"), lastUpdate: time.Now(), updateRate: time.Second * 60}
+}
+
+func (tw *Twitter) UpdateRateSet(rate time.Duration) {
+	tw.updateRate = rate
+}
+
+func (tw *Twitter) UpdateRateGet() time.Duration {
+	return tw.updateRate
 }
 
 func (tw *Twitter) UsersAdd(name string) {
@@ -100,8 +108,7 @@ func (tw *Twitter) TurnSize() int {
 func (tw *Twitter) TurnRelease() []string {
 	var twits []string
 	for _, twit := range tw.twitTurn {
-		t, _ := twit.CreatedAtTime()
-		str := "котик " + twit.User.ScreenName + " " + strconv.FormatInt(int64(time.Since(t).Minutes()), 10) + " минуты назад. " + strings.Replace(twit.Text, "\n", "\\n", -1)
+		str := "котик " + twit.User.ScreenName + ". " + strings.Replace(twit.Text, "\n", "\\n", -1)
 
 		re := regexp.MustCompile("http[s]?:\\/\\/t\\.co\\/.*?([ ]|$)")
 		str = re.ReplaceAllString(str, "")

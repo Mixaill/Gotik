@@ -53,7 +53,7 @@ func (k *Kotik) OnConnect(e *gumble.ConnectEvent) {
 	go k.command_twitter_bootstrap()
 
 	//twitter fetching
-	ticker := time.NewTicker(time.Second * 30)
+	ticker := time.NewTicker(k.Twitter_i.UpdateRateGet())
 	go func() {
 		for {
 			select {
@@ -330,7 +330,8 @@ func (k *Kotik) command_status(e *gumble.User) {
 		"Uptime                : " + strconv.FormatFloat(time.Since(k.connectTime).Hours(), 'f', 2, 64) + " hours <br/>" +
 		"Memory alloc          : " + strconv.FormatFloat(float64(mem.Alloc)/1024.0/1024.0, 'f', 2, 64) + " MB <br/>" +
 		"Volume                : " + strconv.FormatInt(int64(k.Audio.Volume*50.00), 10) + "% <br/>" +
-		"Twitter subscriptions : " + k.Twitter_i.UsersGet() + "<br/>"
+		"Twitter subscriptions : " + k.Twitter_i.UsersGet() + "<br/>" +
+		"Twitter update rate   : " + strconv.FormatFloat(k.Twitter_i.UpdateRateGet().Minutes(), 'f', 2, 64) + " minutes <br/>"
 
 	e.Send(str)
 }
