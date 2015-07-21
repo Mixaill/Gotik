@@ -1,4 +1,4 @@
-package kotik
+package gotik
 
 import (
 	"crypto/md5"
