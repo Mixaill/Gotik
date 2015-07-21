@@ -1,4 +1,4 @@
-package main
+package kotik
 
 import (
 	"crypto/md5"

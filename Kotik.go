@@ -1,5 +1,5 @@
 // Kotik.go
-package main
+package kotik
 
 import (
 	"bytes"
