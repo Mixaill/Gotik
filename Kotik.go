@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"path/filepath"
 
 	"github.com/layeh/gumble/gumble"
 	"github.com/layeh/gumble/gumble_ffmpeg"
@@ -231,7 +232,12 @@ func (k *Kotik) command_list_sounds(e *gumble.User) {
 	files, _ := ioutil.ReadDir("./sounds/")
 	var sounds string = ""
 	for _, f := range files {
-		sounds += "<br/>" + f.Name()
+		if f.IsDir()==false {
+			var filename = f.Name()
+			var extension = filepath.Ext(filename)
+			var name = filename[0:len(filename)-len(extension)]
+			sounds += "<br/>" + name
+		}
 	}
 	e.Send(sounds)
 }
@@ -304,9 +310,14 @@ func (k *Kotik) command_play_simple(text string) {
 	}
 
 	filename := strings.Split(text, "#")[1]
-	if _, err := os.Stat("./sounds/" + filename); err == nil {
-		k.Audio.Source = gumble_ffmpeg.SourceFile("./sounds/" + filename)
-		k.Audio.Play()
+	var formats = []string{".ogg", ".mp3", ".wav"}
+	
+	for _,format := range formats {
+		if _, err := os.Stat("./sounds/" + filename + format); err == nil {
+			k.Audio.Source = gumble_ffmpeg.SourceFile("./sounds/" + filename + format)
+			k.Audio.Play()
+			break
+		}
 	}
 }
 
