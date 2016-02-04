@@ -427,7 +427,7 @@ func main() {
 
 	//Client creation
 	k.Client = gumble.NewClient(k.Config)
-	k.Audio = gumbleffmpeg.New(k.Client)
+	k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceFile("./sounds/purr.ogg"))
 	k.Audio.Command = "ffmpeg"
 
 	//Ivona creation
