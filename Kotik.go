@@ -28,7 +28,7 @@ import (
 
 //Kotik struct
 type Kotik struct {
-	Audio     *gumble_ffmpeg.Stream
+	Audio     *gumbleffmpeg.Stream
 	Config    *gumble.Config
 	Client    *gumble.Client
 	Ivona     *ivona.Ivona
@@ -295,7 +295,7 @@ func (k *Kotik) command_play_ivona(text string, ch chan int) {
 		cb := &ClosingBuffer{bytes.NewBuffer(respond.Audio)}
 		var rc io.ReadCloser
 		rc = cb
-		k.Audio.Source = gumble_ffmpeg.SourceReader(rc)
+		k.Audio.Source = gumbleffmpeg.SourceReader(rc)
 		k.Audio.Play()
 		k.Audio.Wait()
 		if ch != nil {
@@ -314,7 +314,7 @@ func (k *Kotik) command_play_simple(text string) {
 	
 	for _,format := range formats {
 		if _, err := os.Stat("./sounds/" + filename + format); err == nil {
-			k.Audio.Source = gumble_ffmpeg.SourceFile("./sounds/" + filename + format)
+			k.Audio.Source = gumbleffmpeg.SourceFile("./sounds/" + filename + format)
 			k.Audio.Play()
 			break
 		}
@@ -335,7 +335,7 @@ func (k *Kotik) command_play_ymusic(text string, e *gumble.User) {
 		e.Send("Композиция не найдена")
 	}
 	if file != nil {
-		k.Audio.Source = gumble_ffmpeg.SourceReader(file)
+		k.Audio.Source = gumbleffmpeg.SourceReader(file)
 		k.Audio.Play()
 	}
 }
@@ -438,7 +438,7 @@ func main() {
 
 	//Client creation
 	k.Client = gumble.NewClient(k.Config)
-	k.Audio = gumble_ffmpeg.New(k.Client)
+	k.Audio = gumbleffmpeg.New(k.Client)
 	k.Audio.Command = "ffmpeg"
 
 	//Ivona creation
