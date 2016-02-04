@@ -269,7 +269,10 @@ func (k *Kotik) command_pause() {
 }
 
 func (k *Kotik) command_play_ivona(text string, ch chan int) {
-
+	if k.Audio != nil && k.Audio.State() == gumbleffmpeg.StatePlaying { 
+		return 
+	} 
+	
 	opts_input := ivona.Input{Data: text, Type: "text/plain"}
 	opts_outputformat := ivona.OutputFormat{Codec: "MP3", SampleRate: 22050}
 	opts_parameters := ivona.Parameters{Rate: "medium", Volume: "medium", SentenceBreak: 100, ParagraphBreak: 500}
@@ -281,10 +284,11 @@ func (k *Kotik) command_play_ivona(text string, ch chan int) {
 		cb := &ClosingBuffer{bytes.NewBuffer(respond.Audio)}
 		var rc io.ReadCloser
 		rc = cb
-		k.Audio.Source = gumbleffmpeg.SourceReader(rc)
+		
+		k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceReader(rc))
 		k.Audio.Play()
 		k.Audio.Wait()
-		k.Audio.Stop()
+
 		if ch != nil {
 			ch <- 1
 		}
@@ -292,18 +296,17 @@ func (k *Kotik) command_play_ivona(text string, ch chan int) {
 }
 
 func (k *Kotik) command_play_simple(text string) {
-
+	if k.Audio != nil && k.Audio.State() == gumbleffmpeg.StatePlaying { 
+		return 
+	} 
 
 	filename := strings.Split(text, "#")[1]
 	var formats = []string{".ogg", ".mp3", ".wav"}
 	
 	for _,format := range formats {
 		if _, err := os.Stat("./sounds/" + filename + format); err == nil {
-			k.Audio.Source = gumbleffmpeg.SourceFile("./sounds/" + filename + format)
+			k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceFile("./sounds/" + filename + format))
 			k.Audio.Play()
-			k.Audio.Wait()
-			k.Audio.Stop()
-			break
 		}
 	}
 }
@@ -425,8 +428,6 @@ func main() {
 
 	//Client creation
 	k.Client = gumble.NewClient(k.Config)
-	k.Audio = gumbleffmpeg.New(k.Client, nil)
-	k.Audio.Command = "ffmpeg"
 
 	//Ivona creation
 	k.Ivona = ivona.New("GDNAIKHZ6EJPBXXTKZFA", "akU4WnCw2XozeJeMsnS7pVqlBsLgqF4FQbVRnu05")
