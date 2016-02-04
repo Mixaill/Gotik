@@ -269,7 +269,7 @@ func (k *Kotik) command_pause() {
 }
 
 func (k *Kotik) command_play_ivona(text string, ch chan int) {
-	if k.Audio.State() == StatePlaying {
+	if k.Audio.State() == gumbleffmpeg.State.StatePlaying {
 		return
 	}
 
