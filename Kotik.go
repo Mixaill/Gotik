@@ -44,17 +44,6 @@ func (k *Kotik) Timestamp() string {
 	return time.Now().UTC().Format("2006.01.02 15:04:05") + ": "
 }
 
-//AudioListeners
-func (k *Kotik) OnAudioPacket(e *gumble.AudioPacketEvent) {
-	/*
-	fmt.Println(k.Timestamp() + "OnAudioPacket()")
-	fmt.Println(k.Timestamp() + "               ->Sender      :" + e.AudioPacket.Sender.Name)
-	fmt.Println(k.Timestamp() + "               ->Sequence    :" + strconv.FormatInt(int64(e.AudioPacket.Sequence), 10))
-	fmt.Println(k.Timestamp() + "               ->Target      :" + strconv.FormatInt(int64(e.AudioPacket.Target), 10))
-	fmt.Println(e.AudioPacket.AudioBuffer)
-	*/
-}
-
 //Listeners
 func (k *Kotik) OnConnect(e *gumble.ConnectEvent) {
 	k.connectTime = time.Now()
@@ -280,7 +269,7 @@ func (k *Kotik) command_pause() {
 }
 
 func (k *Kotik) command_play_ivona(text string, ch chan int) {
-	if k.Audio.IsPlaying() {
+	if k.Audio.State() == StatePlaying {
 		return
 	}
 
@@ -305,7 +294,7 @@ func (k *Kotik) command_play_ivona(text string, ch chan int) {
 }
 
 func (k *Kotik) command_play_simple(text string) {
-	if k.Audio.IsPlaying() {
+	if k.Audio.State() == StatePlaying {
 		return
 	}
 
@@ -322,7 +311,7 @@ func (k *Kotik) command_play_simple(text string) {
 }
 
 func (k *Kotik) command_play_ymusic(text string, e *gumble.User) {
-	if k.Audio.IsPlaying() {
+	if k.Audio.State() == StatePlaying {
 		return
 	}
 
