@@ -37,6 +37,8 @@ type Kotik struct {
 	ch_keepAlive       chan int
 	ch_TwitterFetching chan int
 	connectTime        time.Time
+	
+	conf_volume int
 }
 
 //Helpers
@@ -286,6 +288,7 @@ func (k *Kotik) command_play_ivona(text string, ch chan int) {
 		rc = cb
 		
 		k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceReader(rc))
+		k.Audio.Volume = k.conf_volume
 		k.Audio.Play()
 		k.Audio.Wait()
 
@@ -306,15 +309,16 @@ func (k *Kotik) command_play_simple(text string) {
 	for _,format := range formats {
 		if _, err := os.Stat("./sounds/" + filename + format); err == nil {
 			k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceFile("./sounds/" + filename + format))
+			k.Audio.Volume = k.conf_volume
 			k.Audio.Play()
 		}
 	}
 }
 
 func (k *Kotik) command_play_ymusic(text string, e *gumble.User) {
-	if k.Audio.State() == gumbleffmpeg.StatePlaying {
-		return
-	}
+	if k.Audio != nil && k.Audio.State() == gumbleffmpeg.StatePlaying { 
+		return 
+	} 
 
 	ym := YMusic{}
 	trackname := strings.Split(text, "#ymusic ")[1]
@@ -325,13 +329,16 @@ func (k *Kotik) command_play_ymusic(text string, e *gumble.User) {
 		e.Send("Композиция не найдена")
 	}
 	if file != nil {
-		k.Audio.Source = gumbleffmpeg.SourceReader(file)
+		k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceReader(file))
+		k.Audio.Volume = k.conf_volume
 		k.Audio.Play()
 	}
 }
 
 func (k *Kotik) command_resume() {
-	k.Audio.Play()
+	if k.Audio != nil {
+		k.Audio.Play()
+	}
 }
 
 func (k *Kotik) command_status(e *gumble.User) {
@@ -341,7 +348,7 @@ func (k *Kotik) command_status(e *gumble.User) {
 	str = "<br/>" +
 		"Uptime                : " + strconv.FormatFloat(time.Since(k.connectTime).Hours(), 'f', 2, 64) + " hours <br/>" +
 		"Memory alloc          : " + strconv.FormatFloat(float64(mem.Alloc)/1024.0/1024.0, 'f', 2, 64) + " MB <br/>" +
-		"Volume                : " + strconv.FormatInt(int64(k.Audio.Volume*50.00), 10) + "% <br/>" +
+		"Volume                : " + strconv.FormatInt(int64(k.conf_volume*50.00), 10) + "% <br/>" +
 		"Twitter subscriptions : " + k.Twitter_i.UsersGet() + "<br/>" +
 		"Twitter update rate   : " + strconv.FormatFloat(k.Twitter_i.UpdateRateGet().Minutes(), 'f', 2, 64) + " minutes <br/>"
 
@@ -349,7 +356,9 @@ func (k *Kotik) command_status(e *gumble.User) {
 }
 
 func (k *Kotik) command_stop() {
-	k.Audio.Stop()
+	if k.Audio != nil {
+		k.Audio.Stop()
+	}
 }
 
 func (k *Kotik) command_update(e *gumble.User) {
@@ -374,7 +383,10 @@ func (k *Kotik) command_volume(text string) {
 			if i > 100 {
 				i = 100
 			}
-			k.Audio.Volume = float32(i) / 50.00
+			k.conf_volume = float32(i) / 50.00
+			if k.Audio != nil {
+				k.Audio.Volume = k.conf_volume
+			}
 		}
 	}
 }
