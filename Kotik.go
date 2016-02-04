@@ -269,9 +269,6 @@ func (k *Kotik) command_pause() {
 }
 
 func (k *Kotik) command_play_ivona(text string, ch chan int) {
-	if k.Audio.State() == gumbleffmpeg.StatePlaying {
-		return
-	}
 
 	opts_input := ivona.Input{Data: text, Type: "text/plain"}
 	opts_outputformat := ivona.OutputFormat{Codec: "MP3", SampleRate: 22050}
@@ -295,9 +292,7 @@ func (k *Kotik) command_play_ivona(text string, ch chan int) {
 }
 
 func (k *Kotik) command_play_simple(text string) {
-	if k.Audio.State() == gumbleffmpeg.StatePlaying {
-		return
-	}
+
 
 	filename := strings.Split(text, "#")[1]
 	var formats = []string{".ogg", ".mp3", ".wav"}
