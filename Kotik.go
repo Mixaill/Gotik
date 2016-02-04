@@ -38,7 +38,7 @@ type Kotik struct {
 	ch_TwitterFetching chan int
 	connectTime        time.Time
 	
-	conf_volume int
+	conf_volume float32
 }
 
 //Helpers
