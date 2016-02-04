@@ -294,7 +294,7 @@ func (k *Kotik) command_play_ivona(text string, ch chan int) {
 }
 
 func (k *Kotik) command_play_simple(text string) {
-	if k.Audio.State() == StatePlaying {
+	if k.Audio.State() == gumbleffmpeg.StatePlaying {
 		return
 	}
 
@@ -311,7 +311,7 @@ func (k *Kotik) command_play_simple(text string) {
 }
 
 func (k *Kotik) command_play_ymusic(text string, e *gumble.User) {
-	if k.Audio.State() == StatePlaying {
+	if k.Audio.State() == gumbleffmpeg.StatePlaying {
 		return
 	}
 
