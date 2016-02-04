@@ -438,6 +438,9 @@ func main() {
 	k.Config.Address = *flag_server
 	k.Config.TLSConfig.InsecureSkipVerify = true
 
+	//Config2
+	k.conf_volume = 0.5
+	
 	//Client creation
 	k.Client = gumble.NewClient(k.Config)
 
