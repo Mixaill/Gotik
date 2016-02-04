@@ -287,6 +287,7 @@ func (k *Kotik) command_play_ivona(text string, ch chan int) {
 		k.Audio.Source = gumbleffmpeg.SourceReader(rc)
 		k.Audio.Play()
 		k.Audio.Wait()
+		k.Audio.Stop()
 		if ch != nil {
 			ch <- 1
 		}
@@ -305,6 +306,8 @@ func (k *Kotik) command_play_simple(text string) {
 		if _, err := os.Stat("./sounds/" + filename + format); err == nil {
 			k.Audio.Source = gumbleffmpeg.SourceFile("./sounds/" + filename + format)
 			k.Audio.Play()
+			k.Audio.Wait()
+			k.Audio.Stop()
 			break
 		}
 	}
