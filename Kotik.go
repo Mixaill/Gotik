@@ -439,7 +439,7 @@ func main() {
 	k.Config.TLSConfig.InsecureSkipVerify = true
 
 	//Config2
-	k.conf_volume = 0.5
+	k.conf_volume = 1.0
 	
 	//Client creation
 	k.Client = gumble.NewClient(k.Config)
