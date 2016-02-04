@@ -439,8 +439,7 @@ func main() {
 	//Attach listeners
 	k.Client.Attach(gumbleutil.AutoBitrate)
 	k.Client.Attach(&k)
-	k.Client.AttachAudio(&k)
-
+	
 	//TLS
 	if *flag_lock != "" {
 		gumbleutil.CertificateLockFile(k.Client, *flag_lock)
