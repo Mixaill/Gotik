@@ -139,54 +139,7 @@ func (k *Mumble) OnTextMessage(e *gumble.TextMessageEvent) {
 		return
 	}
 
-	re_cmd := regexp.MustCompile("^!\\w+")
-	switch re_cmd.FindString(e.Message) {
-	case "!audio_list":
-		k.command_audio_list(e.Sender)
-	case "!audio_pause":
-		k.command_audio_pause()
-	case "!audio_resume":
-		k.command_audio_resume()
-	case "!audio_stop":
-		k.command_audio_stop()
-	case "!audio_volume":
-		k.command_audio_volume(e.Message)
-
-	case "!channels_list":
-		k.command_channels_list(e.Sender)
-	case "!channels_moveto":
-		k.command_channels_moveto(e.Message)
-
-	case "!help":
-		k.command_help(e.Sender)
-
-	case "!update":
-		k.command_update()
-	case "!disconnect":
-		k.command_disconnect(e)
-	case "!status":
-		k.command_status(e.Sender)
-		//case "!twitter":
-		//	go k.command_twitter_process(e.Sender)
-	}
-
-	re_snd := regexp.MustCompile("#(\\w+)")
-	result_snd := re_snd.FindStringSubmatch(e.Message)
-	if len(result_snd) == 2 {
-		switch result_snd[1] {
-		case "ymusic":
-			go k.command_play_ymusic(e.Message, e.Sender)
-		default:
-			go k.command_audio_play_file(e.Message)
-		}
-	}
-
-	//ivona
-	re_ivona := regexp.MustCompile("\\$\\$\\$(.*)")
-	result_ivona := re_ivona.FindStringSubmatch(e.Message)
-	if len(result_ivona) == 2 {
-		go k.command_audio_play_ivona(result_ivona[1])
-	}
+	common.Command_Process(e.Message, e.Sender.Name, k)
 
 }
 
@@ -195,35 +148,41 @@ func (k *Mumble) OnTextMessage(e *gumble.TextMessageEvent) {
 /////
 
 /////Commands/Audio
-func (k *Mumble) command_audio_list(e *gumble.User) {
-	e.Send(common.Command_Audio_List())
+func (k *Mumble) Command_Audio_List(user string) {
+	k.Client.Users.Find(user).Send(common.Command_Audio_List())
 }
 
-func (k *Mumble) command_audio_resume() {
+func (k *Mumble) Command_Audio_Resume() {
 	if k.Audio != nil {
 		k.Audio.Play()
 	}
 }
 
-func (k *Mumble) command_audio_pause() {
+func (k *Mumble) Command_Audio_Pause() {
 	if k.Audio != nil && k.Audio.State() != gumbleffmpeg.StatePaused {
 		k.Audio.Pause()
 	}
 }
 
-func (k *Mumble) command_audio_stop() {
+func (k *Mumble) Command_Audio_Stop() {
 	if k.Audio != nil {
 		k.Audio.Stop()
 	}
 }
 
-func (k *Mumble) command_audio_play_file(text string) {
+func (k *Mumble) Command_Audio_Play_File(text string) {
 	if k.Audio != nil && k.Audio.State() == gumbleffmpeg.StatePlaying {
 		return
 	}
-	fmt.Println(common.Timestamp() + "backends/mumble: command_audio_play_file(): " + text)
 
-	filename := strings.Split(text, "#")[1]
+	var filename string
+	if text[0] == '#' {
+		filename = strings.SplitN(text, "#", 2)[1]
+	} else {
+		filename = strings.SplitN(text, " ", 2)[1]
+	}
+	fmt.Println(common.Timestamp() + "backends/mumble: command_audio_play_file(): " + filename)
+
 	var formats = []string{".ogg", ".mp3", ".wav"}
 
 	for _, format := range formats {
@@ -236,19 +195,26 @@ func (k *Mumble) command_audio_play_file(text string) {
 	}
 }
 
-func (k *Mumble) command_audio_play_ivona(text string) {
+func (k *Mumble) Command_Audio_Play_Ivona(text string, language string) {
 	if k.Audio != nil && k.Audio.State() == gumbleffmpeg.StatePlaying {
 		return
 	}
-	fmt.Println(common.Timestamp() + "backends/mumble: command_audio_play_ivona(): " + text)
 
-	rc := k.services.Ivona.GetAudio_ReadCloser(text, "ru")
+	var tt string
+	if strings.HasPrefix(text, "$$$") {
+		tt = strings.Split(text, "$$$")[1]
+	} else {
+		tt = strings.SplitN(text, " ", 2)[1]
+	}
+	fmt.Println(common.Timestamp() + "backends/mumble: command_audio_play_ivona(): " + tt)
+
+	rc := k.services.Ivona.GetAudio_ReadCloser(tt, language)
 	k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceReader(rc))
 	k.Audio.Volume = k.conf_volume
 	k.Audio.Play()
 }
 
-func (k *Mumble) command_audio_volume(text string) {
+func (k *Mumble) Command_Audio_Volume(text string) {
 	re_sound := regexp.MustCompile("^!volume[ ]?(\\d+)")
 	result_sound := re_sound.FindStringSubmatch(text)
 	if len(result_sound) == 2 {
@@ -267,7 +233,8 @@ func (k *Mumble) command_audio_volume(text string) {
 
 /////Commands/Channels
 
-func (k *Mumble) command_channels_list(e *gumble.User) {
+func (k *Mumble) Command_Channels_List(user string) {
+
 	root := k.Client.Channels[0]
 	var channels string
 	if root != nil {
@@ -276,7 +243,7 @@ func (k *Mumble) command_channels_list(e *gumble.User) {
 			channels += k.command_channels_list_printchild(root.Children, 1)
 		}
 	}
-	e.Send(channels)
+	k.Client.Users.Find(user).Send(channels)
 }
 
 func (k *Mumble) command_channels_list_printchild(children gumble.Channels, level int) string {
@@ -298,7 +265,7 @@ func (k *Mumble) command_channels_list_printchild(children gumble.Channels, leve
 	return out
 }
 
-func (k *Mumble) command_channels_moveto(text string) {
+func (k *Mumble) Command_Channels_Moveto(text string) {
 	re_id := regexp.MustCompile("^!moveto ([0-9]+)")
 	var result_id []string = re_id.FindStringSubmatch(text)
 	if len(result_id) == 2 {
@@ -330,40 +297,18 @@ func (k *Mumble) command_channels_moveto(text string) {
 	}
 }
 
-/////
-
-func (k *Mumble) command_status(e *gumble.User) {
-
+/////Commands/other
+func (k *Mumble) Command_Help(user string) {
+	k.Client.Users.Find(user).Send(common.Command_Help())
 }
 
-func (k *Mumble) command_update() {
+func (k *Mumble) Command_Update() {
 	common.Command_Update()
 }
 
-func (k *Mumble) command_help(e *gumble.User) {
-	e.Send(common.Command_Help())
+func (k *Mumble) Command_Disconnect() {
 }
 
-func (k *Mumble) command_disconnect(e *gumble.TextMessageEvent) {
-	//k.Client.Disconnect()
-}
+func (k *Mumble) Command_Status(user string) {
 
-func (k *Mumble) command_play_ymusic(text string, e *gumble.User) {
-	if k.Audio != nil && k.Audio.State() == gumbleffmpeg.StatePlaying {
-		return
-	}
-
-	ym := services.YMusic{}
-	trackname := strings.Split(text, "#ymusic ")[1]
-	file, title := ym.GetTrack(trackname)
-	if title != "" {
-		e.Send("Найдена композиция: " + title)
-	} else {
-		e.Send("Композиция не найдена")
-	}
-	if file != nil {
-		k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceReader(file))
-		k.Audio.Volume = k.conf_volume
-		k.Audio.Play()
-	}
 }

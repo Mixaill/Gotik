@@ -15,6 +15,7 @@ func main() {
 
 	flag_discord_email := flag.String("discord_email", config.Discord_email, "email of the Discord bot")
 	flag_discord_password := flag.String("discord_password", config.Discord_password, "Discord use password")
+	flag_discord_username := flag.String("discord_username", config.Discord_username, "name of the Discord bot")
 
 	flag_mumble_username := flag.String("mumble_username", config.Mumble_username, "username of the Mumble bot")
 	flag_mumble_password := flag.String("mumble_password", config.Mumble_password, "user Mumble password")
@@ -29,6 +30,7 @@ func main() {
 	flags["Flag_dev"] = *flag_dev
 	flags["Flag_discord_email"] = *flag_discord_email
 	flags["Flag_discord_password"] = *flag_discord_password
+	flags["Flag_discord_username"] = *flag_discord_username
 	flags["Flag_mumble_username"] = *flag_mumble_username
 	flags["Flag_mumble_password"] = *flag_mumble_password
 	flags["Flag_mumble_server"] = *flag_mumble_server
@@ -48,6 +50,9 @@ func main() {
 	s.Twitter = services.NewTwitter()
 
 	//Backends initialization
+	b.Discord = backends.NewDiscord()
+	b.Discord.Start(flags, &s)
+
 	b.Mumble = backends.NewMumble()
 	b.Mumble.Start(flags, &s)
 
