@@ -1,4 +1,4 @@
-package main
+package services
 
 const (
 	YSpeechApiKey = "f7399cb2-4254-464a-b615-5977c65d577b"

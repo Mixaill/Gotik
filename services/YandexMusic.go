@@ -1,4 +1,4 @@
-package main
+package services
 
 import (
 	"crypto/md5"
@@ -176,7 +176,7 @@ func (ym *YMusic) getFileDInfo(sr YMusicSearchRes, fn YMusicFilenameRes) YMusicD
 	return m
 }
 
-func (ym *YMusic) getTrack(text string) (io.ReadCloser, string) {
+func (ym *YMusic) GetTrack(text string) (io.ReadCloser, string) {
 	var title string
 	search := ym.getSearchResult(text)
 	filename := ym.getFileName(search)

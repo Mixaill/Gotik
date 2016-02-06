@@ -1,4 +1,4 @@
-package twitter
+package services
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
+
+	"../config"
 )
 
 type Twitter struct {
@@ -18,10 +20,19 @@ type Twitter struct {
 	updateRate time.Duration
 }
 
-func New() *Twitter {
-	anaconda.SetConsumerKey("ememheL6J1S5r1RwBzoaKc4KR")
-	anaconda.SetConsumerSecret("HKyDHzrirIqVSNJu414ajTLcGXoWIpnkrpNERAY1AEgKP3an6C")
-	return &Twitter{api: anaconda.NewTwitterApi("50292089-521odSFl4uKfV0oLcIryalgetYuP0nxo7i6bQCjTE", "djU5cDWW9rsR2kWmYExR9CxLpJdZdaNTWe7YOubV9VB5b"), lastUpdate: time.Now(), updateRate: time.Second * 60}
+func NewTwitter() *Twitter {
+	anaconda.SetConsumerKey(config.Twitter_ConsumerKey)
+	anaconda.SetConsumerSecret(config.Twitter_ConsumerSecret)
+
+	return &Twitter{api: anaconda.NewTwitterApi("50292089-521odSFl4uKfV0oLcIryalgetYuP0nxo7i6bQCjTE", "djU5cDWW9rsR2kWmYExR9CxLpJdZdaNTWe7YOubV9VB5b"),
+		lastUpdate: time.Now(),
+		updateRate: time.Second * config.Twitter_UpdateRate}
+}
+
+func (tw *Twitter) Bootstrap() {
+	for _, v := range config.Twitter_Bootstrap {
+		tw.UsersAdd(v)
+	}
 }
 
 func (tw *Twitter) UpdateRateSet(rate time.Duration) {
