@@ -27,11 +27,13 @@ type Backend_interface interface {
 	Command_Disconnect()
 	Command_Status(user string)
 	Command_Update()
+
+	Info_Name() string
 }
 
-func Command_Audio_List() string {
+func Command_Audio_List(backend Backend_interface) string {
 	files, _ := ioutil.ReadDir("./sounds/")
-	var sounds string = ""
+	var sounds string = "Доступные звуки:<br/>"
 	for _, f := range files {
 		if f.IsDir() == false {
 			var filename = f.Name()
@@ -40,10 +42,15 @@ func Command_Audio_List() string {
 			sounds += "<br/>" + name
 		}
 	}
+
+	if backend.Info_Name() == "discord" {
+		sounds = strings.Replace(sounds, "<br/>", "\n", -1)
+	}
+
 	return sounds
 }
 
-func Command_Help() string {
+func Command_Help(backend Backend_interface) string {
 	str := "<br/>" +
 		"$$$[text]                  : произнести текст<br/>" +
 		"#[sound]                   : произнести звук<br/><br/>" +
@@ -64,6 +71,10 @@ func Command_Help() string {
 		"!disconnect                : отключить бота<br/>" +
 		"!status                    : информация про бота<br/>" +
 		"!update                    : делает апдейт<br/>"
+
+	if backend.Info_Name() == "discord" {
+		str = strings.Replace(str, "<br/>", "\n", -1)
+	}
 
 	return str
 }

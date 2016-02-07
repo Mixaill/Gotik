@@ -88,43 +88,33 @@ func (k *Mumble) Start(fl map[string]string, s *services.Services) {
 /////
 func (k *Mumble) OnConnect(e *gumble.ConnectEvent) {
 	k.connectTime = time.Now()
-	fmt.Println(common.Timestamp() + "OnConnect()")
 }
 
 func (k *Mumble) OnDisconnect(e *gumble.DisconnectEvent) {
-	fmt.Println(common.Timestamp() + "OnDisconnect()")
 }
 
 func (k *Mumble) OnUserChange(e *gumble.UserChangeEvent) {
-	fmt.Println(common.Timestamp() + "OnUserChange()-> User:" + e.User.Name + " | Type:" + fmt.Sprint(e.Type))
 }
 
 func (k *Mumble) OnChannelChange(e *gumble.ChannelChangeEvent) {
-	fmt.Println(common.Timestamp() + "OnChannelChange()-> Channel:" + e.Channel.Name + " | Type: " + fmt.Sprint(e.Type))
 }
 
 func (k *Mumble) OnPermissionDenied(e *gumble.PermissionDeniedEvent) {
-	fmt.Println(common.Timestamp() + "OnPermissionDenied()-> User:" + e.User.Name + " | Type: " + fmt.Sprint(e.Type))
 }
 
 func (k *Mumble) OnUserList(e *gumble.UserListEvent) {
-	fmt.Println(common.Timestamp() + "OnUserList()")
 }
 
 func (k *Mumble) OnACL(e *gumble.ACLEvent) {
-	fmt.Println(common.Timestamp() + "OnACL()")
 }
 
 func (k *Mumble) OnBanList(e *gumble.BanListEvent) {
-	fmt.Println(common.Timestamp() + "OnBanList()")
 }
 
 func (k *Mumble) OnContextActionChange(e *gumble.ContextActionChangeEvent) {
-	fmt.Println(common.Timestamp() + "OnContextActionChange()")
 }
 
 func (k *Mumble) OnServerConfig(e *gumble.ServerConfigEvent) {
-	fmt.Println(common.Timestamp() + "OnServerConfig()")
 }
 
 func (k *Mumble) OnTextMessage(e *gumble.TextMessageEvent) {
@@ -140,7 +130,6 @@ func (k *Mumble) OnTextMessage(e *gumble.TextMessageEvent) {
 	}
 
 	common.Command_Process(e.Message, e.Sender.Name, k)
-
 }
 
 /////
@@ -149,7 +138,7 @@ func (k *Mumble) OnTextMessage(e *gumble.TextMessageEvent) {
 
 /////Commands/Audio
 func (k *Mumble) Command_Audio_List(user string) {
-	k.Client.Users.Find(user).Send(common.Command_Audio_List())
+	k.Client.Users.Find(user).Send(common.Command_Audio_List(k))
 }
 
 func (k *Mumble) Command_Audio_Resume() {
@@ -299,7 +288,7 @@ func (k *Mumble) Command_Channels_Moveto(text string) {
 
 /////Commands/other
 func (k *Mumble) Command_Help(user string) {
-	k.Client.Users.Find(user).Send(common.Command_Help())
+	k.Client.Users.Find(user).Send(common.Command_Help(k))
 }
 
 func (k *Mumble) Command_Update() {
@@ -311,4 +300,12 @@ func (k *Mumble) Command_Disconnect() {
 
 func (k *Mumble) Command_Status(user string) {
 
+}
+
+/////
+///// Info
+/////
+
+func (k *Mumble) Info_Name() string {
+	return "mumble"
 }
