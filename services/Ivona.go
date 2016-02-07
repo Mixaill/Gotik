@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"../common"
 	"../config"
+	"../utils"
 
 	"github.com/jpadilla/ivona-go"
 )
@@ -66,7 +66,7 @@ func (i *Ivona) GetAudio_ReadCloser(text string, language string) io.ReadCloser 
 
 	var rc io.ReadCloser
 	if err == nil {
-		rc = &common.ClosingBuffer{bytes.NewBuffer(respond.Audio)}
+		rc = &utils.ClosingBuffer{bytes.NewBuffer(respond.Audio)}
 	}
 	return rc
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ChimeraCoder/anaconda"
 	"github.com/layeh/gumble/gumble"
 	"github.com/layeh/gumble/gumbleffmpeg"
 	"github.com/layeh/gumble/gumbleutil"
@@ -17,6 +18,7 @@ import (
 
 	"../common"
 	"../services"
+	"../utils"
 )
 
 type Mumble struct {
@@ -26,8 +28,8 @@ type Mumble struct {
 
 	services *services.Services
 
-	connectTime time.Time
-	conf_volume float32
+	conf_connectTime time.Time
+	conf_volume      float32
 }
 
 func NewMumble() *Mumble {
@@ -78,8 +80,13 @@ func (k *Mumble) Start(fl map[string]string, s *services.Services) {
 	}
 
 	//Connect
-	if err := k.Client.Connect(); err != nil {
-		panic(err)
+	flag := false
+	for flag == false {
+		if err := k.Client.Connect(); err != nil {
+			time.Sleep(time.Second * 5)
+		} else {
+			flag = true
+		}
 	}
 }
 
@@ -87,7 +94,7 @@ func (k *Mumble) Start(fl map[string]string, s *services.Services) {
 /////Listeners
 /////
 func (k *Mumble) OnConnect(e *gumble.ConnectEvent) {
-	k.connectTime = time.Now()
+	k.conf_connectTime = time.Now()
 }
 
 func (k *Mumble) OnDisconnect(e *gumble.DisconnectEvent) {
@@ -118,9 +125,9 @@ func (k *Mumble) OnServerConfig(e *gumble.ServerConfigEvent) {
 }
 
 func (k *Mumble) OnTextMessage(e *gumble.TextMessageEvent) {
-	fmt.Println(common.Timestamp() + "OnTextMessage()-> Message:" + e.Message)
+	fmt.Println(utils.Timestamp() + "OnTextMessage()-> Message:" + e.Message)
 	if e.Sender != nil {
-		fmt.Println(common.Timestamp() + "               -> User: " + e.Sender.Name)
+		fmt.Println(utils.Timestamp() + "               -> User: " + e.Sender.Name)
 	} else {
 		return
 	}
@@ -164,7 +171,7 @@ func (k *Mumble) Command_Audio_Play_File(text string) {
 		return
 	}
 
-	filepath := common.GetAudioFilePath(text)
+	filepath := utils.GetAudioFilePath(text)
 	if filepath != "" {
 		k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceFile(filepath))
 		k.Audio.Volume = k.conf_volume
@@ -183,7 +190,7 @@ func (k *Mumble) Command_Audio_Play_Ivona(text string, language string) {
 	} else {
 		tt = strings.SplitN(text, " ", 2)[1]
 	}
-	fmt.Println(common.Timestamp() + "backends/mumble: command_audio_play_ivona(): " + tt)
+	fmt.Println(utils.Timestamp() + "backends/mumble: command_audio_play_ivona(): " + language + ":" + tt)
 
 	rc := k.services.Ivona.GetAudio_ReadCloser(tt, language)
 	k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceReader(rc))
@@ -192,7 +199,7 @@ func (k *Mumble) Command_Audio_Play_Ivona(text string, language string) {
 }
 
 func (k *Mumble) Command_Audio_Volume(text string) {
-	re_sound := regexp.MustCompile("^!volume[ ]?(\\d+)")
+	re_sound := regexp.MustCompile("^!audio_volume[ ]?(\\d+)")
 	result_sound := re_sound.FindStringSubmatch(text)
 	if len(result_sound) == 2 {
 		i, err := strconv.Atoi(result_sound[1])
@@ -287,7 +294,42 @@ func (k *Mumble) Command_Disconnect() {
 }
 
 func (k *Mumble) Command_Status(user string) {
+	var str string
+	str = str +
+		"Volume                : " + strconv.FormatInt(int64(k.Get_Volume()*50.00), 10) + "% <br/>"
+	k.Client.Users.Find(user).Send(str)
+}
 
+/////Commands/twitter
+func (k *Mumble) Command_Twitter_ReadTwits(twits []anaconda.Tweet) {
+	for _, val := range twits {
+		k.Client.Self.Channel.Send(utils.TwitterFormatForText(val), false)
+		k.Command_Audio_Play_Ivona(utils.TwitterFormatForAudio(val), val.Lang)
+		k.Audio.Wait()
+	}
+}
+
+func (k *Mumble) Command_Twitter_Status(user string) {
+	var str string
+	str = str +
+		"<br/>Twitter subscriptions : " + k.services.Twitter.UsersGet() + "<br/>" +
+		"Twitter update rate   : " + strconv.FormatFloat(k.services.Twitter.UpdateRateGet().Minutes(), 'f', 2, 64) + " minutes <br/>"
+	k.Client.Users.Find(user).Send(str)
+}
+
+/////
+///// Getters
+/////
+func (k *Mumble) Get_ConnectTime() time.Time {
+	return k.conf_connectTime
+}
+
+func (k *Mumble) Get_Services() *services.Services {
+	return k.services
+}
+
+func (k *Mumble) Get_Volume() float32 {
+	return k.conf_volume
 }
 
 /////

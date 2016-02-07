@@ -3,8 +3,6 @@ package services
 import (
 	"fmt"
 	"net/url"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
@@ -13,9 +11,10 @@ import (
 )
 
 type Twitter struct {
-	api        *anaconda.TwitterApi
-	users      []anaconda.User
-	twitTurn   []anaconda.Tweet
+	api      *anaconda.TwitterApi
+	users    []anaconda.User
+	twitTurn []anaconda.Tweet
+
 	lastUpdate time.Time
 	updateRate time.Duration
 }
@@ -24,7 +23,7 @@ func NewTwitter() *Twitter {
 	anaconda.SetConsumerKey(config.Twitter_ConsumerKey)
 	anaconda.SetConsumerSecret(config.Twitter_ConsumerSecret)
 
-	return &Twitter{api: anaconda.NewTwitterApi("50292089-521odSFl4uKfV0oLcIryalgetYuP0nxo7i6bQCjTE", "djU5cDWW9rsR2kWmYExR9CxLpJdZdaNTWe7YOubV9VB5b"),
+	return &Twitter{api: anaconda.NewTwitterApi(config.Twitter_AK_1, config.Twitter_AK_2),
 		lastUpdate: time.Now(),
 		updateRate: time.Second * config.Twitter_UpdateRate}
 }
@@ -116,18 +115,8 @@ func (tw *Twitter) TurnSize() int {
 	return len(tw.twitTurn)
 }
 
-func (tw *Twitter) TurnRelease() []string {
-	var twits []string
-	for _, twit := range tw.twitTurn {
-		str := "котик " + twit.User.ScreenName + ". " + strings.Replace(twit.Text, "\n", "\\n", -1)
-
-		re := regexp.MustCompile("http[s]?:\\/\\/t\\.co\\/.*?([ ]|$)")
-		str = re.ReplaceAllString(str, "")
-		str = strings.Replace(str, "/", "", -1)
-
-		fmt.Println("TurnRelease()-> " + str)
-		twits = append(twits, str)
-	}
+func (tw *Twitter) TurnRelease() []anaconda.Tweet {
+	twits := tw.twitTurn
 	tw.twitTurn = tw.twitTurn[:0]
 	return twits
 }

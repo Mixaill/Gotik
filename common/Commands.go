@@ -7,7 +7,14 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/ChimeraCoder/anaconda"
+
+	"../services"
+	"../utils"
 )
 
 type Backend_interface interface {
@@ -27,6 +34,13 @@ type Backend_interface interface {
 	Command_Disconnect()
 	Command_Status(user string)
 	Command_Update()
+
+	Command_Twitter_ReadTwits(twits []anaconda.Tweet)
+	Command_Twitter_Status(user string)
+
+	Get_ConnectTime() time.Time
+	Get_Services() *services.Services
+	Get_Volume() float32
 
 	Info_Name() string
 }
@@ -51,44 +65,40 @@ func Command_Audio_List(backend Backend_interface) string {
 }
 
 func Command_Help(backend Backend_interface) string {
+	//audio
 	str := "<br/>" +
 		"$$$[text]                  : произнести текст<br/>" +
 		"#[sound]                   : произнести звук<br/><br/>" +
 
-		"!audio_list                : cписок звуков<br/>"
-
-	if backend.Info_Name() == "mumble" {
-		str = str + "!audio_pause               : приостановить воспроизведение<br/>"
-	}
-
-	str = str +
+		"!audio_list                : cписок звуков<br/>" +
 		"!audio_play_file [sound]   : произнести звук<br/>" +
-		"!audio_play_ivona [text]   : произнести текст<br/>"
+		"!audio_play_ivona [text]   : произнести текст<br/>" +
+		"!audio_stop                : остановить воспроизведение звука<br/>"
 
 	if backend.Info_Name() == "mumble" {
-		str = str + "!audio_resume              : восстановить воспроизведение<br/>"
+		str = str +
+			"!audio_pause               : приостановить воспроизведение<br/>" +
+			"!audio_resume              : восстановить воспроизведение<br/>" +
+			"!audio_volume [float]      : установить громкость. Максимальная 100, cтандартная 50, минимальная 0, шаг 1<br/>"
 	}
 
-	str = str + "!audio_stop                : остановить воспроизведение звука<br/>"
-
-	if backend.Info_Name() == "mumble" {
-		str = str + "!audio_volume [float]      : установить громкость. Максимальная 100, cтандартная 50, минимальная 0, шаг 1<br/><br/>"
-	}
-
+	//channels
 	str = str +
-		"!channels_list             : список каналов<br/>" +
-		"!channels_moveto [id/name] : перенести бота на другой канал<br/><br/>" +
+		"<br/>!channels_list             : список каналов<br/>" +
+		"!channels_moveto [id/name] : перенести бота на другой канал<br/>"
 
-		"!help                      : эта команда<br/><br/>"
+	//twitter
+	str = str + "<br/>!twitter_status : информация о твиттере<br/><br/>"
+
+	//other
+	str = str + "<br/>!help                      : эта команда<br/><br/>"
 
 	if false == true {
 		str = str +
 			"!disconnect                : отключить бота<br/>" +
-			"!status                    : информация про бота<br/>"
+			"!status                    : информация про бота<br/>" +
+			"!update                    : делает апдейт<br/>"
 	}
-
-	str = str +
-		"!update                    : делает апдейт<br/>"
 
 	if backend.Info_Name() == "discord" {
 		str = strings.Replace(str, "<br/>", "\n", -1)
@@ -104,14 +114,33 @@ func Command_Update() {
 		procAttr.Files = []*os.File{os.Stdin, os.Stdout, os.Stderr}
 		os.StartProcess("./update_linux.sh", args, procAttr)
 	} else {
-		fmt.Println(Timestamp() + "!update works only in production")
+		fmt.Println(utils.Timestamp() + "!update works only in production")
 	}
+}
+
+func Command_Status(backend Backend_interface) string {
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+	var str string = ""
+	str = "<br/>" +
+		"Backend:              : " + backend.Info_Name() + " <br/>" +
+		"Uptime                : " + strconv.FormatFloat(time.Since(backend.Get_ConnectTime()).Hours(), 'f', 2, 64) + " hours <br/>"
+	if backend.Info_Name() == "mumble" {
+
+	}
+
+	if backend.Info_Name() == "discord" {
+		str = strings.Replace(str, "<br/>", "\n", -1)
+	}
+
+	return str
 }
 
 func Command_Process(message string, user string, backend Backend_interface) {
 
-	message = strings.TrimSuffix(message, "</p>")
-	message = strings.TrimPrefix(message, "<p>")
+	message = strings.Replace(message, "<br/>", "", -1)
+	message = strings.Replace(message, "</p>", "", -1)
+	message = strings.Replace(message, "<p>", "", -1)
 
 	re_cmd := regexp.MustCompile("^!\\w+")
 	switch re_cmd.FindString(message) {
@@ -135,6 +164,9 @@ func Command_Process(message string, user string, backend Backend_interface) {
 	case "!channels_moveto":
 		go backend.Command_Channels_Moveto(message)
 
+	case "!twitter_status":
+		go backend.Command_Twitter_Status(user)
+
 	case "!help":
 		go backend.Command_Help(user)
 
@@ -145,8 +177,6 @@ func Command_Process(message string, user string, backend Backend_interface) {
 	case "!update":
 		go backend.Command_Update()
 
-		//case "!twitter":
-		//	go k.command_twitter_process(e.Sender)
 	}
 
 	// alias: #

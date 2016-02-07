@@ -30,5 +30,12 @@ func Ivona_Voices() map[string]Config_voice {
 		Name:           "Maxim",
 		Language:       "ru-RU",
 		Gender:         "Male"}
+	Ivona_Voices["en"] = Config_voice{Rate: "medium",
+		Volume:         "medium",
+		SentenceBreak:  100,
+		ParagraphBreak: 500,
+		Name:           "Sally",
+		Language:       "en-US",
+		Gender:         "Female"}
 	return Ivona_Voices
 }

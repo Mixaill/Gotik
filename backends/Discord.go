@@ -7,11 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ChimeraCoder/anaconda"
 	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
 
 	"../common"
 	"../services"
+	"../utils"
 )
 
 /////
@@ -23,6 +25,8 @@ type Discord struct {
 	self     *discordgo.User
 	guildID  string
 	services *services.Services
+
+	conf_connectTime time.Time
 }
 
 func NewDiscord() *Discord {
@@ -222,7 +226,7 @@ func (k *Discord) Command_Audio_Play_File(text string) {
 		return
 	}
 
-	filepath := common.GetAudioFilePath(text)
+	filepath := utils.GetAudioFilePath(text)
 	if filepath != "" {
 		dgvoice.PlayAudioFile(k.discord, filepath)
 	}
@@ -303,6 +307,35 @@ func (k *Discord) Command_Disconnect() {
 }
 
 func (k *Discord) Command_Status(user string) {
+}
+
+/////Commands/twitter
+func (k *Discord) Command_Twitter_ReadTwits([]anaconda.Tweet) {
+
+}
+
+func (k *Discord) Command_Twitter_Status(user string) {
+	var str string
+	str = str +
+		"\nTwitter subscriptions : " + k.services.Twitter.UsersGet() + "\n" +
+		"Twitter update rate   : " + strconv.FormatFloat(k.services.Twitter.UpdateRateGet().Minutes(), 'f', 2, 64) + " minutes \n"
+	k.internal_sendMessage_private(str, user)
+}
+
+/////
+///// Getters
+/////
+func (k *Discord) Get_ConnectTime() time.Time {
+	return k.conf_connectTime
+}
+
+func (k *Discord) Get_Services() *services.Services {
+	return k.services
+}
+
+func (k *Discord) Get_Volume() float32 {
+	//unimplemented
+	return 0.0
 }
 
 /////
