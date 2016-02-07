@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/dgvoice"
@@ -205,12 +206,15 @@ func (k *Discord) Command_Audio_List(user string) {
 }
 
 func (k *Discord) Command_Audio_Resume() {
+	//unimplemented
 }
 
 func (k *Discord) Command_Audio_Pause() {
+	//unimplemented
 }
 
 func (k *Discord) Command_Audio_Stop() {
+	dgvoice.KillPlayer()
 }
 
 func (k *Discord) Command_Audio_Play_File(text string) {
@@ -226,9 +230,26 @@ func (k *Discord) Command_Audio_Play_File(text string) {
 }
 
 func (k *Discord) Command_Audio_Play_Ivona(text string, language string) {
+	if !k.discord.Voice.Ready {
+		return
+	}
+
+	var tt string
+	if strings.HasPrefix(text, "$$$") {
+		tt = strings.Split(text, "$$$")[1]
+	} else {
+		tt = strings.SplitN(text, " ", 2)[1]
+	}
+
+	filename := k.services.Ivona.GetAudio_File(tt, language)
+
+	if filename != "" {
+		dgvoice.PlayAudioFile(k.discord, filename)
+	}
 }
 
 func (k *Discord) Command_Audio_Volume(text string) {
+	//unimplemented
 }
 
 /////Commands/Channels

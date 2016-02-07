@@ -55,21 +55,39 @@ func Command_Help(backend Backend_interface) string {
 		"$$$[text]                  : произнести текст<br/>" +
 		"#[sound]                   : произнести звук<br/><br/>" +
 
-		"!audio_list                : cписок звуков<br/>" +
-		"!audio_pause               : приостановить воспроизведение<br/>" +
-		"!audio_play_file [sound]   : произнести звук<br/>" +
-		"!audio_play_ivona [text]   : произнести текст<br/>" +
-		"!audio_resume              : восстановить воспроизведение<br/>" +
-		"!audio_stop                : остановить воспроизведение звука<br/>" +
-		"!audio_volume [float]      : установить громкость. Максимальная 100, cтандартная 50, минимальная 0, шаг 1<br/><br/>" +
+		"!audio_list                : cписок звуков<br/>"
 
+	if backend.Info_Name() == "mumble" {
+		str = str + "!audio_pause               : приостановить воспроизведение<br/>"
+	}
+
+	str = str +
+		"!audio_play_file [sound]   : произнести звук<br/>" +
+		"!audio_play_ivona [text]   : произнести текст<br/>"
+
+	if backend.Info_Name() == "mumble" {
+		str = str + "!audio_resume              : восстановить воспроизведение<br/>"
+	}
+
+	str = str + "!audio_stop                : остановить воспроизведение звука<br/>"
+
+	if backend.Info_Name() == "mumble" {
+		str = str + "!audio_volume [float]      : установить громкость. Максимальная 100, cтандартная 50, минимальная 0, шаг 1<br/><br/>"
+	}
+
+	str = str +
 		"!channels_list             : список каналов<br/>" +
 		"!channels_moveto [id/name] : перенести бота на другой канал<br/><br/>" +
 
-		"!help                      : эта команда<br/><br/>" +
+		"!help                      : эта команда<br/><br/>"
 
-		"!disconnect                : отключить бота<br/>" +
-		"!status                    : информация про бота<br/>" +
+	if false == true {
+		str = str +
+			"!disconnect                : отключить бота<br/>" +
+			"!status                    : информация про бота<br/>"
+	}
+
+	str = str +
 		"!update                    : делает апдейт<br/>"
 
 	if backend.Info_Name() == "discord" {

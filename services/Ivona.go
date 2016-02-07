@@ -2,7 +2,10 @@ package services
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 
 	"../common"
 	"../config"
@@ -33,7 +36,7 @@ func NewIvona() *Ivona {
 	return p
 }
 
-func (i *Ivona) GetAudio_ReadCloser(text string, language string) io.ReadCloser {
+func (i *Ivona) GetAudio_Response(text string, language string) (*ivona.SpeechResponse, error) {
 	var val config.Config_voice
 	var ok bool
 
@@ -50,10 +53,31 @@ func (i *Ivona) GetAudio_ReadCloser(text string, language string) io.ReadCloser 
 	speechopts := ivona.SpeechOptions{Input: &opts_input, OutputFormat: &opts_outputformat, Parameters: &opts_parameters, Voice: &opts_voice}
 
 	respond, err := i.iv.CreateSpeech(speechopts)
-	var rc io.ReadCloser
 
+	if err != nil {
+		fmt.Println("services/ivona/GetAudio_Response(): error ", err)
+	}
+
+	return respond, err
+}
+
+func (i *Ivona) GetAudio_ReadCloser(text string, language string) io.ReadCloser {
+	respond, err := i.GetAudio_Response(text, language)
+
+	var rc io.ReadCloser
 	if err == nil {
 		rc = &common.ClosingBuffer{bytes.NewBuffer(respond.Audio)}
 	}
 	return rc
+}
+
+func (i *Ivona) GetAudio_File(text string, language string) string {
+	respond, err := i.GetAudio_Response(text, language)
+
+	if err == nil {
+		os.MkdirAll("./temp", os.ModePerm)
+		ioutil.WriteFile("./temp/ivona_discord.mp3", respond.Audio, os.ModePerm)
+		return "./temp/ivona_discord.mp3"
+	}
+	return ""
 }
