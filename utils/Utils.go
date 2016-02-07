@@ -34,7 +34,14 @@ func GetAudioFilePath(text string) string {
 
 ///Twitter
 func TwitterFormatForAudio(twit anaconda.Tweet) string {
-	str := "котик " + twit.User.ScreenName + ". " + strings.Replace(twit.Text, "\n", "\\n", -1)
+	var str string
+
+	if twit.Lang == "en" {
+		str = "kitten "
+	} else {
+		str = "котик "
+	}
+	str = "котик " + twit.User.ScreenName + ". " + strings.Replace(twit.Text, "\n", "\\n", -1)
 
 	re := regexp.MustCompile("http[s]?:\\/\\/t\\.co\\/.*?([ ]|$)")
 	str = re.ReplaceAllString(str, "")
@@ -44,7 +51,7 @@ func TwitterFormatForAudio(twit anaconda.Tweet) string {
 }
 
 func TwitterFormatForText(twit anaconda.Tweet) string {
-	return "@" + twit.User.Name + ": " + twit.Text
+	return "@" + twit.User.ScreenName + ": " + twit.Text
 }
 
 ///ClosingBuffer
