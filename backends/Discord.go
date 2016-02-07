@@ -281,9 +281,6 @@ func (k *Discord) Command_Channels_Moveto(text string) {
 
 		channels := k.internal_getChannels_voice()
 		if i <= len(channels) {
-			for k.discord.Voice.Ready == false {
-				time.Sleep(time.Millisecond * 100)
-			}
 			err := k.discord.ChannelVoiceJoin(channels[i-1].GuildID, channels[i-1].ID, false, true)
 			if err != nil {
 				fmt.Println("backends/discord/Command_Channels_Moveto(): error connecting voice channel", err)
