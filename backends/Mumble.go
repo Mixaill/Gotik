@@ -164,23 +164,11 @@ func (k *Mumble) Command_Audio_Play_File(text string) {
 		return
 	}
 
-	var filename string
-	if text[0] == '#' {
-		filename = strings.SplitN(text, "#", 2)[1]
-	} else {
-		filename = strings.SplitN(text, " ", 2)[1]
-	}
-	fmt.Println(common.Timestamp() + "backends/mumble: command_audio_play_file(): " + filename)
-
-	var formats = []string{".ogg", ".mp3", ".wav"}
-
-	for _, format := range formats {
-		if _, err := os.Stat("./sounds/" + filename + format); err == nil {
-			k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceFile("./sounds/"+filename+format))
-			k.Audio.Volume = k.conf_volume
-			k.Audio.Play()
-			k.Audio.Wait()
-		}
+	filepath := common.GetAudioFilePath(text)
+	if filepath != "" {
+		k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceFile(filepath))
+		k.Audio.Volume = k.conf_volume
+		k.Audio.Play()
 	}
 }
 
@@ -255,7 +243,7 @@ func (k *Mumble) command_channels_list_printchild(children gumble.Channels, leve
 }
 
 func (k *Mumble) Command_Channels_Moveto(text string) {
-	re_id := regexp.MustCompile("^!moveto ([0-9]+)")
+	re_id := regexp.MustCompile("^!channels_moveto ([0-9]+)")
 	var result_id []string = re_id.FindStringSubmatch(text)
 	if len(result_id) == 2 {
 		i, err := strconv.Atoi(result_id[1])
@@ -267,7 +255,7 @@ func (k *Mumble) Command_Channels_Moveto(text string) {
 			k.Client.Self.Move(k.Client.Channels[uint32(i)])
 		}
 	} else {
-		re_str := regexp.MustCompile("^!moveto (.*)")
+		re_str := regexp.MustCompile("^!channels_moveto (.*)")
 		var result_str []string = re_str.FindStringSubmatch(text)
 
 		if len(result_str) == 2 {

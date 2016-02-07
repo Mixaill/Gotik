@@ -2,14 +2,20 @@ package backends
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
 
 	"../common"
 	"../services"
 )
+
+/////
+/////Ctor
+/////
 
 type Discord struct {
 	discord  *discordgo.Session
@@ -22,6 +28,10 @@ func NewDiscord() *Discord {
 	p := new(Discord)
 	return p
 }
+
+/////
+/////Helpers
+/////
 
 func (k *Discord) Start(fl map[string]string, s *services.Services) {
 
@@ -47,6 +57,7 @@ func (k *Discord) Start(fl map[string]string, s *services.Services) {
 	k.internal_findSelf()
 	k.internal_findGuild()
 
+	k.Command_Channels_Moveto("!channels_moveto 1")
 }
 
 func (k *Discord) internal_findSelf() {
@@ -54,7 +65,7 @@ func (k *Discord) internal_findSelf() {
 	var err error
 	k.self, err = k.discord.User("@me")
 	if err != nil {
-		fmt.Println("backends/discord/start_findSelf(): error fetching self, ", err)
+		fmt.Println("backends/discord/internal_findSelf(): error fetching self, ", err)
 		return
 	}
 }
@@ -63,7 +74,7 @@ func (k *Discord) internal_findGuild() {
 	ch, err := k.discord.UserGuilds()
 
 	if err != nil {
-		fmt.Println("backends/discord/start_findGuild(): error fetching guild, ", err)
+		fmt.Println("backends/discord/internal_findGuild(): error fetching guild, ", err)
 		return
 	}
 	k.guildID = ch[0].ID
@@ -74,7 +85,7 @@ func (k *Discord) internal_getChannels_text() []*discordgo.Channel {
 
 	channels, err := k.discord.GuildChannels(k.guildID)
 	if err != nil {
-		fmt.Println("backends/discord/Command_Channels_List(): error fetching guild channels ", err)
+		fmt.Println("backends/discord/internal_getChannels_text(): error fetching guild channels ", err)
 		return text
 	}
 
@@ -92,7 +103,7 @@ func (k *Discord) internal_getChannels_voice() []*discordgo.Channel {
 
 	channels, err := k.discord.GuildChannels(k.guildID)
 	if err != nil {
-		fmt.Println("backends/discord/Command_Channels_List(): error fetching guild channels ", err)
+		fmt.Println("backends/discord/internal_getChannels_voice(): error fetching guild channels ", err)
 		return voice
 	}
 
@@ -159,6 +170,10 @@ func (k *Discord) internal_sendMessage_private(message string, user string) {
 	}
 }
 
+/////
+/////Events
+/////
+
 func (k *Discord) onMessageCreate(s *discordgo.Session, m *discordgo.Message) {
 	var err error
 
@@ -199,6 +214,15 @@ func (k *Discord) Command_Audio_Stop() {
 }
 
 func (k *Discord) Command_Audio_Play_File(text string) {
+	if !k.discord.Voice.Ready {
+		return
+	}
+
+	filepath := common.GetAudioFilePath(text)
+	if filepath != "" {
+		dgvoice.PlayAudioFile(k.discord, filepath)
+	}
+
 }
 
 func (k *Discord) Command_Audio_Play_Ivona(text string, language string) {
@@ -211,26 +235,38 @@ func (k *Discord) Command_Audio_Volume(text string) {
 
 func (k *Discord) Command_Channels_List(user string) {
 
-	text := k.internal_getChannels_text()
 	voice := k.internal_getChannels_voice()
 
 	var str string
 	str = ""
 
-	str = "Текстовые каналы:\n"
-	for id, val := range text {
-		str = str + "t" + strconv.Itoa(id+1) + ": " + val.Name + "\n"
-	}
-
-	str = str + "\nГолосовые каналы:\n"
+	str = str + "\nКаналы:\n"
 	for id, val := range voice {
-		str = str + "v" + strconv.Itoa(id+1) + ": " + val.Name + "\n"
+		str = str + strconv.Itoa(id+1) + ": " + val.Name + "\n"
 	}
 
 	k.internal_sendMessage_private(str, user)
 }
 
 func (k *Discord) Command_Channels_Moveto(text string) {
+	re_id := regexp.MustCompile("^!channels_moveto ([0-9]+)")
+	var result_id []string = re_id.FindStringSubmatch(text)
+	if len(result_id) == 2 {
+		i, err := strconv.Atoi(result_id[1])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		channels := k.internal_getChannels_voice()
+		if i <= len(channels) {
+			err := k.discord.ChannelVoiceJoin(channels[i-1].GuildID, channels[i-1].ID, false, true)
+			if err != nil {
+				fmt.Println("backends/discord/Command_Channels_Moveto(): error connecting voice channel", err)
+				return
+			}
+		}
+	}
 }
 
 /////Commands/other
