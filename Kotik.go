@@ -49,6 +49,7 @@ func main() {
 	s.Ivona = services.NewIvona()
 	s.Twitter = services.NewTwitter()
 	s.Twitter.Bootstrap()
+	s.YTranslate = services.NewYTranslate()
 
 	//Backends initialization
 	b.Discord = backends.NewDiscord()

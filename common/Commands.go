@@ -139,6 +139,7 @@ func Command_Status(backend Backend_interface) string {
 func Command_Process(message string, user string, backend Backend_interface) {
 
 	message = strings.Replace(message, "<br/>", "", -1)
+	message = strings.Replace(message, "<br />", "", -1)
 	message = strings.Replace(message, "</p>", "", -1)
 	message = strings.Replace(message, "<p>", "", -1)
 
@@ -151,7 +152,7 @@ func Command_Process(message string, user string, backend Backend_interface) {
 	case "!audio_play_file":
 		go backend.Command_Audio_Play_File(message)
 	case "!audio_play_ivona":
-		go backend.Command_Audio_Play_Ivona(message, "ru")
+		go backend.Command_Audio_Play_Ivona(message, "")
 	case "!audio_resume":
 		go backend.Command_Audio_Resume()
 	case "!audio_stop":
@@ -195,7 +196,7 @@ func Command_Process(message string, user string, backend Backend_interface) {
 	re_ivona := regexp.MustCompile("\\$\\$\\$(.*)")
 	result_ivona := re_ivona.FindStringSubmatch(message)
 	if len(result_ivona) == 2 {
-		go backend.Command_Audio_Play_Ivona(message, "ru")
+		go backend.Command_Audio_Play_Ivona(message, "")
 	}
 
 }

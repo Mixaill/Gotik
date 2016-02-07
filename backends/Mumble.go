@@ -192,6 +192,10 @@ func (k *Mumble) Command_Audio_Play_Ivona(text string, language string) {
 	}
 	fmt.Println(utils.Timestamp() + "backends/mumble: command_audio_play_ivona(): " + language + ":" + tt)
 
+	if language == "" {
+		language = k.services.YTranslate.Detect(tt)
+	}
+
 	rc := k.services.Ivona.GetAudio_ReadCloser(tt, language)
 	k.Audio = gumbleffmpeg.New(k.Client, gumbleffmpeg.SourceReader(rc))
 	k.Audio.Volume = k.conf_volume

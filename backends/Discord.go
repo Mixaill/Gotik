@@ -245,6 +245,10 @@ func (k *Discord) Command_Audio_Play_Ivona(text string, language string) {
 		tt = strings.SplitN(text, " ", 2)[1]
 	}
 
+	if language == "" {
+		language = k.services.YTranslate.Detect(tt)
+	}
+
 	filename := k.services.Ivona.GetAudio_File(tt, language)
 
 	if filename != "" {
