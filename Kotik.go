@@ -51,10 +51,10 @@ func main() {
 
 	//Backends initialization
 	b.Discord = backends.NewDiscord()
-	b.Discord.Start(flags, &s)
-
 	b.Mumble = backends.NewMumble()
-	b.Mumble.Start(flags, &s)
+
+	go b.Discord.Start(flags, &s)
+	go b.Mumble.Start(flags, &s)
 
 	<-ch_keepAlive
 }
