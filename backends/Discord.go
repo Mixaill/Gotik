@@ -26,7 +26,8 @@ type Discord struct {
 	guildID  string
 	services *services.Services
 
-	conf_connectTime time.Time
+	conf_connectTime    time.Time
+	conf_twitterChannel int
 }
 
 func NewDiscord() *Discord {
@@ -49,20 +50,26 @@ func (k *Discord) Start(fl map[string]string, s *services.Services) {
 	// Login to the Discord server and store the authentication token
 	err := k.discord.Login(fl["Flag_discord_email"], fl["Flag_discord_password"])
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("backends/discord/Start()-> error: ", err)
 		return
 	}
 
 	// Open websocket connection
 	err = k.discord.Open()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("backends/discord/Start()->", err)
+		return
 	}
 
+	//find self object and server(guild)ID
 	k.internal_findSelf()
 	k.internal_findGuild()
 
+	//connect to voice channel #1
 	k.Command_Channels_Moveto("!channels_moveto 1")
+
+	//connect twitter broadcasting to text channel #1
+	k.conf_twitterChannel = 1
 }
 
 func (k *Discord) internal_findSelf() {
@@ -119,6 +126,36 @@ func (k *Discord) internal_getChannels_voice() []*discordgo.Channel {
 	}
 
 	return voice
+}
+
+func (k *Discord) internal_sendMessage_group(message string, channelID string) {
+
+	channelExists := false
+
+	//fetching channel
+	channels, err := k.discord.GuildChannels(k.guildID)
+	if err != nil {
+		fmt.Println("backends/discord/internal_sendMessage_group(): error fetching group channels, ", err)
+		return
+	}
+
+	//checking if channel exists
+	for _, element := range channels {
+		if element.ID == channelID {
+			channelExists = true
+		}
+	}
+	if channelExists == false {
+		fmt.Println("backends/discord/internal_sendMessage_group(): error finding channel, ")
+		return
+	}
+
+	//sending message
+	_, err = k.discord.ChannelMessageSend(channelID, message)
+	if err != nil {
+		fmt.Println("backends/discord/internal_sendMessage_group(): error sending group message, ", err)
+		return
+	}
 }
 
 func (k *Discord) internal_sendMessage_private(message string, user string) {
@@ -314,15 +351,19 @@ func (k *Discord) Command_Status(user string) {
 }
 
 /////Commands/twitter
-func (k *Discord) Command_Twitter_ReadTwits([]anaconda.Tweet) {
-
+func (k *Discord) Command_Twitter_ReadTwits(twits []anaconda.Tweet) {
+	for _, val := range twits {
+		k.internal_sendMessage_group(utils.TwitterFormatForText(val), k.internal_getChannels_text()[k.conf_twitterChannel-1].ID)
+		k.Command_Audio_Play_Ivona(utils.TwitterFormatForAudio(val), val.Lang)
+	}
 }
 
 func (k *Discord) Command_Twitter_Status(user string) {
 	var str string
-	str = str +
-		"\nTwitter subscriptions : " + k.services.Twitter.UsersGet() + "\n" +
-		"Twitter update rate   : " + strconv.FormatFloat(k.services.Twitter.UpdateRateGet().Minutes(), 'f', 2, 64) + " minutes \n"
+	str = "\n" +
+		"Twitter subscriptions : " + k.services.Twitter.UsersGet() + "\n" +
+		"Twitter update rate   : " + strconv.FormatFloat(k.services.Twitter.UpdateRateGet().Minutes(), 'f', 2, 64) + " minutes \n" +
+		"Twitter channel       : " + strconv.Itoa(k.conf_twitterChannel) + "." + k.internal_getChannels_text()[k.conf_twitterChannel-1].Name + "\n"
 	k.internal_sendMessage_private(str, user)
 }
 

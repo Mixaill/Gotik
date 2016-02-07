@@ -41,7 +41,7 @@ func TwitterFormatForAudio(twit anaconda.Tweet) string {
 	} else {
 		str = "котик "
 	}
-	str = "котик " + twit.User.ScreenName + ". " + strings.Replace(twit.Text, "\n", "\\n", -1)
+	str = str + twit.User.ScreenName + ". " + strings.Replace(twit.Text, "\n", "\\n", -1)
 
 	re := regexp.MustCompile("http[s]?:\\/\\/t\\.co\\/.*?([ ]|$)")
 	str = re.ReplaceAllString(str, "")
