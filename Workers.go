@@ -26,6 +26,6 @@ func TwitterWorkerProcess(backnds backends.Backends, srvcs services.Services) {
 	srvcs.Twitter.TurnFill()
 	twits := srvcs.Twitter.TurnRelease()
 
-	backnds.Discord.Command_Twitter_ReadTwits(twits)
+	//backnds.Discord.Command_Twitter_ReadTwits(twits)
 	backnds.Mumble.Command_Twitter_ReadTwits(twits)
 }
