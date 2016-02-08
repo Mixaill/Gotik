@@ -1,7 +1,7 @@
 package config
 
 const (
-	Discord_email    = "kotik@mixaill.tk"
-	Discord_username = "Kotik"
-	Discord_password = "meowmeowmeow"
+	Discord_email    = ""
+	Discord_username = ""
+	Discord_password = ""
 )
