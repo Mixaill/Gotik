@@ -37,6 +37,7 @@ type Backend_interface interface {
 
 	Command_Twitter_ReadTwits(twits []anaconda.Tweet)
 	Command_Twitter_Status(user string)
+	Command_Twitter_Switch()
 
 	Get_ConnectTime() time.Time
 	Get_Services() *services.Services
@@ -88,7 +89,9 @@ func Command_Help(backend Backend_interface) string {
 		"!channels_moveto [id/name] : перенести бота на другой канал<br/>"
 
 	//twitter
-	str = str + "<br/>!twitter_status : информация о твиттере<br/><br/>"
+	str = str + 
+	        "<br/>!twitter_status : информация о твиттере<br/>"+
+	        "!twitter_switch : включить/выключить чтение из твиттера <br/>"
 
 	//other
 	str = str + "<br/>!help                      : эта команда<br/><br/>"
@@ -167,6 +170,8 @@ func Command_Process(message string, user string, backend Backend_interface) {
 
 	case "!twitter_status":
 		go backend.Command_Twitter_Status(user)
+	case "!twitter_switch":
+		go backend.Command_Twitter_Switch()
 
 	case "!help":
 		go backend.Command_Help(user)
