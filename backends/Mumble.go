@@ -325,6 +325,10 @@ func (k *Mumble) Command_Twitter_Status(user string) {
 	k.Client.Users.Find(user).Send(str)
 }
 
+func (k *Mumble) Command_Twitter_Switch() {
+	k.conf_twitterEnable = !k.conf_twitterEnable
+}
+
 /////
 ///// Getters
 /////
