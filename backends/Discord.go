@@ -28,6 +28,7 @@ type Discord struct {
 
 	conf_connectTime    time.Time
 	conf_twitterChannel int
+	conf_twitterEnable bool
 }
 
 func NewDiscord() *Discord {
@@ -70,6 +71,7 @@ func (k *Discord) Start(fl map[string]string, s *services.Services) {
 
 	//connect twitter broadcasting to text channel #1
 	k.conf_twitterChannel = 1
+	k.conf_twitterEnable = true
 }
 
 func (k *Discord) internal_findSelf() {
@@ -352,9 +354,11 @@ func (k *Discord) Command_Status(user string) {
 
 /////Commands/twitter
 func (k *Discord) Command_Twitter_ReadTwits(twits []anaconda.Tweet) {
-	for _, val := range twits {
-		k.internal_sendMessage_group(utils.TwitterFormatForText(val), k.internal_getChannels_text()[k.conf_twitterChannel-1].ID)
-		k.Command_Audio_Play_Ivona(utils.TwitterFormatForAudio(val), val.Lang)
+	if k.conf_twitterEnable == true {
+		for _, val := range twits {
+			k.internal_sendMessage_group(utils.TwitterFormatForText(val), k.internal_getChannels_text()[k.conf_twitterChannel-1].ID)
+			k.Command_Audio_Play_Ivona(utils.TwitterFormatForAudio(val), val.Lang)
+		}
 	}
 }
 
