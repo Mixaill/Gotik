@@ -371,6 +371,11 @@ func (k *Discord) Command_Twitter_Status(user string) {
 	k.internal_sendMessage_private(str, user)
 }
 
+func (k *Discord) Command_Twitter_Switch() {
+	k.conf_twitterEnable = !k.conf_twitterEnable
+}
+
+
 /////
 ///// Getters
 /////
