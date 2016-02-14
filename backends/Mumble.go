@@ -30,6 +30,7 @@ type Mumble struct {
 
 	conf_connectTime time.Time
 	conf_volume      float32
+	conf_twitterEnable bool
 }
 
 func NewMumble() *Mumble {
@@ -95,6 +96,7 @@ func (k *Mumble) Start(fl map[string]string, s *services.Services) {
 /////
 func (k *Mumble) OnConnect(e *gumble.ConnectEvent) {
 	k.conf_connectTime = time.Now()
+	k.conf_twitterEnable = true
 }
 
 func (k *Mumble) OnDisconnect(e *gumble.DisconnectEvent) {
@@ -306,10 +308,12 @@ func (k *Mumble) Command_Status(user string) {
 
 /////Commands/twitter
 func (k *Mumble) Command_Twitter_ReadTwits(twits []anaconda.Tweet) {
-	for _, val := range twits {
-		k.Client.Self.Channel.Send(utils.TwitterFormatForText(val), false)
-		k.Command_Audio_Play_Ivona(utils.TwitterFormatForAudio(val), val.Lang)
-		k.Audio.Wait()
+	if k.conf_twitterEnable == true {
+		for _, val := range twits {
+			k.Client.Self.Channel.Send(utils.TwitterFormatForText(val), false)
+			k.Command_Audio_Play_Ivona(utils.TwitterFormatForAudio(val), val.Lang)
+			k.Audio.Wait()
+		}
 	}
 }
 
