@@ -47,20 +47,20 @@ func main() {
 
 	//Services initialization
 	s.Ivona = services.NewIvona()
-	s.Twitter = services.NewTwitter()
-	s.Twitter.Bootstrap()
+	//s.Twitter = services.NewTwitter()
+	//s.Twitter.Bootstrap()
 	s.YTranslate = services.NewYTranslate()
 
 	//Backends initialization
-	b.Discord = backends.NewDiscord()
+	//b.Discord = backends.NewDiscord()
 	b.Mumble = backends.NewMumble()
 
-	go b.Discord.Start(flags, &s)
+	//go b.Discord.Start(flags, &s)
 	go b.Mumble.Start(flags, &s)
 
 	//Workers
 
-	TwitterWorker(b, s)
+	//TwitterWorker(b, s)
 
 	<-ch_keepAlive
 }

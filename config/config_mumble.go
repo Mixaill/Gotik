@@ -2,7 +2,7 @@ package config
 
 const (
 	Mumble_username = "Kotik-dev"
-	Mumble_server   = "direct.galyonkin.com:64738"
+	Mumble_server   = "magenta.cleanvoice.ru:65019"
 	Mumble_password = ""
 
 	Mumble_cert      = ""

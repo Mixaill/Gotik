@@ -3,6 +3,7 @@ package backends
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"os"
 	"regexp"
 	"sort"
@@ -11,10 +12,10 @@ import (
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
-	"github.com/layeh/gumble/gumble"
-	"github.com/layeh/gumble/gumbleffmpeg"
-	"github.com/layeh/gumble/gumbleutil"
-	_ "github.com/layeh/gumble/opus"
+	"layeh.com/gumble/gumble"
+	"layeh.com/gumble/gumbleffmpeg"
+	"layeh.com/gumble/gumbleutil"
+	_ "layeh.com/gumble/opus"
 
 	"../common"
 	"../services"
@@ -22,14 +23,15 @@ import (
 )
 
 type Mumble struct {
-	Audio  *gumbleffmpeg.Stream
-	Config *gumble.Config
-	Client *gumble.Client
+	Audio     *gumbleffmpeg.Stream
+	Config    *gumble.Config
+	TLSConfig *tls.Config
+	Client    *gumble.Client
 
 	services *services.Services
 
-	conf_connectTime time.Time
-	conf_volume      float32
+	conf_connectTime   time.Time
+	conf_volume        float32
 	conf_twitterEnable bool
 }
 
@@ -45,24 +47,15 @@ func (k *Mumble) Start(fl map[string]string, s *services.Services) {
 	k.Config = gumble.NewConfig()
 	k.Config.Username = fl["Flag_mumble_username"]
 	k.Config.Password = fl["Flag_mumble_password"]
-	k.Config.Address = fl["Flag_mumble_server"]
-
-	k.Config.TLSConfig.InsecureSkipVerify = true
-
 	k.conf_volume = 1.0
 
-	//Client creation
-	k.Client = gumble.NewClient(k.Config)
-
 	//Attach listeners
-	k.Client.Attach(gumbleutil.AutoBitrate)
-	k.Client.Attach(k)
+	k.Config.Attach(gumbleutil.AutoBitrate)
+	k.Config.Attach(k)
 
 	//TLS
-	if fl["Flag_mumble_cert_lock"] != "" {
-		gumbleutil.CertificateLockFile(k.Client, fl["Flag_mumble_cert_lock"])
-	}
-
+	k.TLSConfig = new(tls.Config)
+	k.TLSConfig.InsecureSkipVerify = true
 	if _, err := os.Stat("./config/Kotik.pem"); err == nil && fl["Flag_dev"] == "false" {
 		fl["Flag_mumble_cert"] = "./config/Kotik.pem"
 	} else if _, err := os.Stat("./config/Kotik-dev.pem"); err == nil && fl["Flag_dev"] == "true" {
@@ -76,22 +69,13 @@ func (k *Mumble) Start(fl map[string]string, s *services.Services) {
 		if certificate, err := tls.LoadX509KeyPair(fl["Flag_mumble_cert"], fl["Flag_mumble_cert_key"]); err != nil {
 			panic(err)
 		} else {
-			k.Config.TLSConfig.Certificates = append(k.Config.TLSConfig.Certificates, certificate)
+			k.TLSConfig.Certificates = append(k.TLSConfig.Certificates, certificate)
 		}
 	}
 
-	//Connect
-	flag := false
-	for flag == false {
-		if err := k.Client.Connect(); err != nil {
-			time.Sleep(time.Second * 5)
-		} else {
-			flag = true
-		}
-	}
+	k.Client, _ = gumble.DialWithDialer(new(net.Dialer), fl["Flag_mumble_server"], k.Config, k.TLSConfig)
 }
 
-/////
 /////Listeners
 /////
 func (k *Mumble) OnConnect(e *gumble.ConnectEvent) {
